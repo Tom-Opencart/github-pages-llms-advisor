@@ -13,6 +13,7 @@ const llmsPreview = document.getElementById('llms-preview');
 
 const discoveryTemplate = document.getElementById('discovery-item-template');
 const exportTemplate = document.getElementById('export-item-template');
+const downloadJsonButton = document.getElementById('download-json-button');
 let latestDownloadPayload = null;
 
 const SERVICE_HINTS = [
