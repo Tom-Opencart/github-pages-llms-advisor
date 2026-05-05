@@ -8,6 +8,26 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+
+  <div class="overlay" id="analysis-overlay" hidden>
+    <div class="overlay__card">
+      <div class="overlay__orb overlay__orb--1"></div>
+      <div class="overlay__orb overlay__orb--2"></div>
+      <div class="overlay__orb overlay__orb--3"></div>
+      <div class="overlay__ring"></div>
+      <div class="overlay__content">
+        <div class="overlay__spinner"></div>
+        <h2 class="overlay__title">Анализирую сайт</h2>
+        <p class="overlay__hint" id="overlay-hint">Читаю главную страницу, sitemap и служебные разделы...</p>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="floating-download" id="floating-download" hidden>
+    <span class="floating-download__icon">↓</span>
+    <span class="floating-download__label">JSON</span>
+  </button>
+
   <div class="page-shell">
     <header class="hero">
       <div class="hero__topline">
@@ -15,26 +35,24 @@
         <div class="hero__microcopy">Статический помощник для настройки llms.txt без сервера и сборки</div>
       </div>
 
-      <div class="hero__main">
-        <div class="hero__copy">
-          <h1>LLMS Setup Advisor</h1>
-          <p class="hero__lead">
-            Вставьте ссылку на сайт и получите понятную стартовую конфигурацию именно под модуль
-            <strong>LLMS.txt Generator для OpenCart</strong>.
-          </p>
-          <div class="hero__bullets">
-            <div class="hero__bullet">
-              <strong>Что делает:</strong>
-              собирает sitemap, сервисные страницы, статьи, FAQ и готовые поля для вставки в модуль.
-            </div>
-            <div class="hero__bullet">
-              <strong>Как использовать:</strong>
-              сначала проверьте, что найдено на сайте, затем прочитайте рекомендации, и только после этого копируйте готовые блоки.
-            </div>
-            <div class="hero__bullet">
-              <strong>Важно:</strong>
-              это помощник по настройке, а не гарантия результата. Финальную конфигурацию всё равно стоит проверить вручную.
-            </div>
+      <div class="hero__copy">
+        <h1>LLMS Setup Advisor</h1>
+        <p class="hero__lead">
+          Вставьте ссылку на сайт и получите понятную стартовую конфигурацию именно под модуль
+          <strong>LLMS.txt Generator для OpenCart</strong>.
+        </p>
+        <div class="hero__bullets">
+          <div class="hero__bullet">
+            <strong>Что делает:</strong>
+            собирает sitemap, сервисные страницы, статьи, FAQ и готовые поля для вставки в модуль.
+          </div>
+          <div class="hero__bullet">
+            <strong>Как использовать:</strong>
+            сначала проверьте, что найдено на сайте, затем прочитайте рекомендации, и только после этого копируйте готовые блоки.
+          </div>
+          <div class="hero__bullet">
+            <strong>Важно:</strong>
+            это помощник по настройке, а не гарантия результата. Финальную конфигурацию всё равно стоит проверить вручную.
           </div>
         </div>
 
@@ -77,13 +95,13 @@
             </div>
           </form>
 
-        <div id="status-box" class="status-box status-box--idle">
-          <span class="status-box__text">
-            <span class="spinner" hidden></span>
-            <strong>Статус:</strong>
-            <span id="status-text">Ожидает URL сайта.</span>
-          </span>
-        </div>
+          <div id="status-box" class="status-box status-box--idle">
+            <span class="status-box__text">
+              <span class="spinner" hidden></span>
+              <strong>Статус:</strong>
+              <span id="status-text">Ожидает URL сайта.</span>
+            </span>
+          </div>
 
           <div class="intake-card__footnote">
             Сначала инструмент пробует читать сайт напрямую через браузер. Если сайт блокирует CORS, включается fallback через публичный текстовый прокси.
@@ -92,7 +110,7 @@
       </div>
     </header>
 
-    <main class="results-shell">
+    <main class="results-shell" id="results-shell">
       <section class="summary-strip" id="summary-strip">
         <article class="summary-tile">
           <div class="summary-tile__kicker">Шаг 2</div>

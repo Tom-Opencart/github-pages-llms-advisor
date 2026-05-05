@@ -14,6 +14,10 @@ const llmsPreview = document.getElementById('llms-preview');
 const discoveryTemplate = document.getElementById('discovery-item-template');
 const exportTemplate = document.getElementById('export-item-template');
 const downloadJsonButton = document.getElementById('download-json-button');
+const floatingDownload = document.getElementById('floating-download');
+const analysisOverlay = document.getElementById('analysis-overlay');
+const overlayHint = document.getElementById('overlay-hint');
+const resultsShell = document.getElementById('results-shell');
 let latestDownloadPayload = null;
 
 const SERVICE_HINTS = [
@@ -71,10 +75,33 @@ downloadJsonButton.addEventListener('click', () => {
   }, 0);
 });
 
+floatingDownload.addEventListener('click', () => {
+  downloadJsonButton.click();
+});
+
 function setStatus(type, text) {
   statusBox.className = `status-box status-box--${type}`;
   statusText.textContent = text;
   statusSpinner.hidden = type !== 'working';
+}
+
+function showOverlay(hint) {
+  if (hint) {
+    overlayHint.textContent = hint;
+  }
+  analysisOverlay.hidden = false;
+}
+
+function hideOverlay() {
+  analysisOverlay.hidden = true;
+}
+
+function scrollToResults() {
+  resultsShell.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function showFloatingDownload() {
+  floatingDownload.hidden = false;
 }
 
 function sanitizeMultiline(value) {
@@ -858,8 +885,10 @@ async function runAdvisor() {
   analyzeButton.classList.add('btn--loading');
   demoButton.disabled = true;
   downloadJsonButton.disabled = true;
+  floatingDownload.hidden = true;
   latestDownloadPayload = null;
   showSkeletons();
+  showOverlay('Читаю главную страницу, sitemap и служебные разделы...');
   setStatus('working', 'Пробую прочитать сайт, sitemap и служебные страницы...');
 
   try {
@@ -970,7 +999,9 @@ async function runAdvisor() {
     addFadeIn(exportsList);
 
     hideSkeletons();
+    hideOverlay();
     downloadJsonButton.disabled = false;
+    showFloatingDownload();
     llmsPreview.textContent = formatPreview({
       siteTitle,
       tagline,
@@ -990,8 +1021,11 @@ async function runAdvisor() {
     } else {
       setStatus('success', 'Анализ завершён. Сначала прочитайте рекомендации, затем откройте нужные поля и копируйте только то, что подходит вашему магазину.');
     }
+    setTimeout(() => scrollToResults(), 200);
   } catch (error) {
     hideSkeletons();
+    hideOverlay();
+    floatingDownload.hidden = true;
     discoveryGrid.innerHTML = '<div class="placeholder">Анализ не выполнен. Проверьте URL и попробуйте ещё раз.</div>';
     recommendationsBox.innerHTML = '<div class="placeholder">Рекомендации пока не собраны.</div>';
     exportsList.innerHTML = '<div class="placeholder">Экспорт появится после успешного анализа.</div>';
