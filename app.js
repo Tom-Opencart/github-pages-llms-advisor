@@ -142,7 +142,8 @@ function slugifyHostname(hostname) {
 function buildConfigFileName(siteUrl) {
   try {
     const url = new URL(siteUrl);
-    return `llms-config-${slugifyHostname(url.hostname)}.json`;
+    const date = new Date().toISOString().slice(0, 10);
+    return `llms-config-${slugifyHostname(url.hostname)}-${date}.json`;
   } catch (error) {
     return 'llms-config.json';
   }
