@@ -156,8 +156,11 @@
             <p>Открывайте только нужный блок. Так страница не превращается в длинную техническую простыню.</p>
           </div>
           <div class="exports-toolbar">
-            <button type="button" class="btn btn--primary" id="download-json-button" disabled>Скачать JSON для модуля</button>
-            <div class="exports-toolbar__note">
+            <div class="exports-toolbar__actions">
+              <button type="button" class="btn btn--primary" id="download-json-button" disabled>Скачать JSON для модуля</button>
+              <button type="button" class="btn btn--ghost" id="preview-json-button" disabled>Показать JSON</button>
+            </div>
+            <div class="exports-toolbar__note" id="json-meta-note">
               Этот файл пригодится для будущего импорта настроек прямо в админке модуля.
             </div>
           </div>
@@ -172,6 +175,16 @@
             <p>Это дополнительный ориентир. Полезно посмотреть его в конце, когда рекомендации уже понятны.</p>
           </div>
           <pre id="llms-preview" class="preview-box"># Preview появится после анализа</pre>
+        </section>
+
+        <section class="card card--secondary" id="json-preview-card" hidden>
+          <div class="card__head">
+            <h2>JSON preview</h2>
+            <p>Быстрая проверка содержимого файла до скачивания. Это удобно, если нужно убедиться, что JSON не пустой и выглядит корректно.</p>
+          </div>
+          <pre id="json-preview" class="preview-box">{
+  "format": "llms-generator-config"
+}</pre>
         </section>
       </section>
     </main>

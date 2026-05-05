@@ -14,6 +14,10 @@ const llmsPreview = document.getElementById('llms-preview');
 const discoveryTemplate = document.getElementById('discovery-item-template');
 const exportTemplate = document.getElementById('export-item-template');
 const downloadJsonButton = document.getElementById('download-json-button');
+const previewJsonButton = document.getElementById('preview-json-button');
+const jsonMetaNote = document.getElementById('json-meta-note');
+const jsonPreviewCard = document.getElementById('json-preview-card');
+const jsonPreview = document.getElementById('json-preview');
 const floatingDownload = document.getElementById('floating-download');
 const analysisOverlay = document.getElementById('analysis-overlay');
 const overlayHint = document.getElementById('overlay-hint');
@@ -25,7 +29,7 @@ const SERVICE_HINTS = [
   { key: 'contacts', label: 'Контакты', patterns: ['/contacts', '/contact', '/kontakty', '/contact-us', '/kontakty/'] },
   { key: 'delivery', label: 'Доставка', patterns: ['/delivery', '/dostavka', '/shipping', '/dostavka/'] },
   { key: 'payment', label: 'Оплата', patterns: ['/payment', '/oplata', '/payment-info', '/oplata/'] },
-  { key: 'order', label: 'Оформление заказа', patterns: ['/checkout', '/order', '/make-order', '/zakaz', '/make-order/'] },
+  { key: 'order', label: 'Оформление заказа', patterns: ['/checkout', '/checkout/', '/make-order', '/make-order/', '/oformlenie-zakaza', '/zakaz/'] },
   { key: 'faq', label: 'FAQ / Вопросы и ответы', patterns: ['/faq', '/voprosy-i-otvety', '/questions'] },
   { key: 'reviews', label: 'Отзывы', patterns: ['/reviews', '/otzyvy', '/testimonials'] }
 ];
@@ -37,7 +41,7 @@ const BLOG_HINTS = [
 ];
 
 const MARKETPLACE_WORDS = ['ozon', 'wildberries', 'яндекс маркет', 'marketplace', 'маркетплейс', 'маркетплейсов'];
-const B2B_WORDS = ['опт', 'оптом', 'для бизнеса', 'b2b', 'поставк', 'корпоратив'];
+const B2B_WORDS = ['оптов', 'оптовые', 'оптовый', 'для бизнеса', 'b2b', 'корпоратив', 'сотрудничество'];
 const ECOM_WORDS = ['интернет-магазин', 'доставка', 'каталог', 'товар', 'корзина', 'заказ'];
 
 const DEMO_SITE = 'https://standartpak.ru';
@@ -59,20 +63,33 @@ downloadJsonButton.addEventListener('click', () => {
     return;
   }
 
-  const fileName = buildConfigFileName(latestDownloadPayload.source.site_url);
-  const blob = new Blob([JSON.stringify(latestDownloadPayload, null, 2)], { type: 'application/json;charset=utf-8' });
+  const meta = getJsonMeta(latestDownloadPayload);
+  const fileName = meta.fileName;
+  const blob = new Blob([meta.jsonString], { type: 'application/json;charset=utf-8' });
   const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement('a');
 
   link.href = objectUrl;
   link.download = fileName;
+  link.target = '_self';
   document.body.appendChild(link);
   link.click();
   link.remove();
 
   setTimeout(() => {
     URL.revokeObjectURL(objectUrl);
-  }, 0);
+  }, 30000);
+});
+
+previewJsonButton.addEventListener('click', () => {
+  if (!latestDownloadPayload) {
+    return;
+  }
+
+  const meta = getJsonMeta(latestDownloadPayload);
+  jsonPreview.textContent = meta.jsonString;
+  jsonPreviewCard.hidden = false;
+  jsonPreviewCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 floatingDownload.addEventListener('click', () => {
@@ -149,6 +166,30 @@ function buildConfigFileName(siteUrl) {
   }
 }
 
+function getJsonMeta(payload) {
+  const fileName = buildConfigFileName(payload.source.site_url);
+  const jsonString = JSON.stringify(payload, null, 2);
+  const bytes = new Blob([jsonString], { type: 'application/json;charset=utf-8' }).size;
+
+  return {
+    fileName,
+    jsonString,
+    bytes
+  };
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 async function fetchTextWithFallback(targetUrl) {
   const encoded = encodeURIComponent(targetUrl);
   const candidates = [
@@ -174,6 +215,7 @@ async function fetchTextWithFallback(targetUrl) {
         return {
           ok: true,
           source: candidate.label,
+          targetUrl,
           url: candidate.url,
           text
         };
@@ -186,6 +228,7 @@ async function fetchTextWithFallback(targetUrl) {
   return {
     ok: false,
     source: 'none',
+    targetUrl,
     url: targetUrl,
     text: '',
     errors
@@ -238,9 +281,42 @@ function extractUrls(source, baseUrl) {
 
   return uniq(
     found
-      .map((item) => item.replace(/[),.;]+$/g, ''))
+      .map((item) => item.replace(/[),.;]+$/g, '').replace(/\)\]\(.+$/g, ''))
       .filter((item) => /^https?:\/\//i.test(item))
   );
+}
+
+function isAssetUrl(url) {
+  return /\/image\/|\/cache\/|\/image\/cache\/|\/catalog\/view\/|\/assets\/|\/static\/|\/storage\/|\/cdn-cgi\//i.test(url)
+    || /\.(?:jpg|jpeg|png|gif|webp|svg|ico|css|js|woff2?|ttf|eot|pdf|xml)(?:\?.*)?$/i.test(url);
+}
+
+function isIgnorableUrl(url, origin) {
+  return !url.startsWith(origin)
+    || isAssetUrl(url)
+    || /#/.test(url)
+    || /\/login\/|\/register\/|\/wishlist\/|\/compare\/|\/account\/|route=account|route=checkout|route=product\/search|\/search/i.test(url);
+}
+
+function getPreferredReadableSources(readableSources) {
+  const htmlish = readableSources.filter((item) => item.source !== 'jina-ai');
+  return htmlish.length ? htmlish : readableSources;
+}
+
+function findCatalogLink(links, origin) {
+  const candidates = links.filter((link) => {
+    if (isIgnorableUrl(link, origin)) {
+      return false;
+    }
+
+    return /\/category\/|\/catalog\/|\/shop\/|\/collection\/|\/products?\//i.test(link);
+  });
+
+  const preferred = candidates.find((link) => /\/category\//i.test(link))
+    || candidates.find((link) => /\/catalog\/?$/i.test(link))
+    || candidates[0];
+
+  return preferred || '';
 }
 
 function scoreWords(text, words) {
@@ -295,11 +371,14 @@ async function collectRemoteData(siteUrl) {
   ]);
 
   const textSources = [homeResult, ...auxiliary].filter((item) => item.ok);
+  const preferredSources = getPreferredReadableSources(textSources);
+  const linkSources = preferredSources.length ? preferredSources : textSources;
 
   return {
     homeResult,
-    combined: textSources.map((item) => item.text).join('\n'),
-    combinedLinks: uniq(textSources.flatMap((item) => extractUrls(item.text, siteUrl.href))),
+    primarySource: preferredSources[0] || homeResult,
+    combined: preferredSources.map((item) => item.text).join('\n'),
+    combinedLinks: uniq(linkSources.flatMap((item) => extractUrls(item.text, siteUrl.href)).filter((link) => !isAssetUrl(link))),
     readableSources: textSources,
     fetchErrors: [homeResult, ...auxiliary]
       .filter((item) => !item.ok && item.errors)
@@ -310,7 +389,11 @@ async function collectRemoteData(siteUrl) {
 function findServicePages(links, origin) {
   return SERVICE_HINTS.map((entry) => {
     const match = links.find((link) => {
-      if (!link.startsWith(origin)) {
+      if (isIgnorableUrl(link, origin)) {
+        return false;
+      }
+
+      if (entry.key === 'order' && /order-history|история-заказ/i.test(link)) {
         return false;
       }
 
@@ -324,7 +407,7 @@ function findServicePages(links, origin) {
 function findBlogPages(links, origin) {
   return BLOG_HINTS.map((entry) => {
     const match = links.find((link) => {
-      if (!link.startsWith(origin)) {
+      if (isIgnorableUrl(link, origin)) {
         return false;
       }
 
@@ -339,11 +422,13 @@ function detectSitemaps(readableSources, origin) {
   const found = [];
 
   readableSources.forEach((source) => {
-    if (source.url.toLowerCase().includes('robots.txt')) {
+    const effectiveUrl = source.targetUrl || source.url;
+
+    if (effectiveUrl.toLowerCase().includes('robots.txt')) {
       const robotsSitemaps = [...source.text.matchAll(/sitemap:\s*(https?:\/\/[^\s]+)/gi)].map((match) => match[1]);
       found.push(...robotsSitemaps);
-    } else if (/(sitemap|news-sitemap|blog-sitemap|uni-news-sitemap)/i.test(source.url.toLowerCase())) {
-      found.push(source.url.replace(/^https:\/\/api\.allorigins\.win\/raw\?url=/i, ''));
+    } else if (/(sitemap|news-sitemap|blog-sitemap|uni-news-sitemap)/i.test(effectiveUrl.toLowerCase())) {
+      found.push(effectiveUrl);
     }
   });
 
@@ -354,7 +439,7 @@ function detectSitemaps(readableSources, origin) {
 
 function guessStoreTitle(title, hostname) {
   if (title) {
-    return title.split('|')[0].split('—')[0].trim() || title.trim();
+    return title.split('|')[0].trim() || title.trim();
   }
 
   return slugifyHostname(hostname).replace(/-/g, ' ');
@@ -403,15 +488,17 @@ function dedupeLabeledLinks(items) {
   });
 }
 
-function buildOfficialSources(siteUrl, servicePages, blogPages) {
+function buildOfficialSources(siteUrl, servicePages, blogPages, combinedLinks) {
   const origin = siteUrl.origin;
   const sources = [{ label: 'Главная магазина', url: origin }];
-  const catalogMatch = [...servicePages, ...blogPages].find(() => false);
+  const catalogLink = findCatalogLink(combinedLinks, origin);
 
-  sources.push({
-    label: 'Каталог товаров',
-    url: `${origin}/catalog`
-  });
+  if (catalogLink) {
+    sources.push({
+      label: 'Каталог товаров',
+      url: catalogLink
+    });
+  }
 
   servicePages.forEach((item) => sources.push(item));
   blogPages.forEach((item) => sources.push(item));
@@ -421,11 +508,12 @@ function buildOfficialSources(siteUrl, servicePages, blogPages) {
 
 function buildPriorityLinks(siteUrl, servicePages, blogPages, focus, combinedLinks) {
   const origin = siteUrl.origin;
-  const catalogLink = combinedLinks.find((item) => /\/cat\/|\/catalog\/|\/catalog$|\/shop\//i.test(item));
-  const links = [
-    { label: 'Главная магазина', url: origin },
-    { label: 'Каталог товаров', url: catalogLink || `${origin}/catalog` }
-  ];
+  const catalogLink = findCatalogLink(combinedLinks, origin);
+  const links = [{ label: 'Главная магазина', url: origin }];
+
+  if (catalogLink) {
+    links.push({ label: 'Каталог товаров', url: catalogLink });
+  }
 
   servicePages.forEach((item) => {
     if (['Контакты', 'О компании', 'Оформление заказа', 'Доставка', 'Оплата'].includes(item.label)) {
@@ -518,7 +606,7 @@ function buildFaq(title, focus, servicePages, blogPages) {
 function buildUrlLogic(siteUrl, links, blogPages) {
   const origin = siteUrl.origin;
   const lines = [];
-  const catalogLink = links.find((item) => /\/cat\/|\/catalog\/|\/catalog$|\/shop\//i.test(item));
+  const catalogLink = findCatalogLink(links, origin);
 
   lines.push(
     catalogLink
@@ -886,8 +974,11 @@ async function runAdvisor() {
   analyzeButton.classList.add('btn--loading');
   demoButton.disabled = true;
   downloadJsonButton.disabled = true;
+  previewJsonButton.disabled = true;
   floatingDownload.hidden = true;
   latestDownloadPayload = null;
+  jsonPreviewCard.hidden = true;
+  jsonMetaNote.textContent = 'Этот файл пригодится для будущего импорта настроек прямо в админке модуля.';
   showSkeletons();
   showOverlay('Читаю главную страницу, sitemap и служебные разделы...');
   setStatus('working', 'Пробую прочитать сайт, sitemap и служебные страницы...');
@@ -899,15 +990,16 @@ async function runAdvisor() {
     const cleanedBody = cleanText(remote.combined);
     const servicePages = findServicePages(remote.combinedLinks, siteUrl.origin);
     const blogPages = findBlogPages(remote.combinedLinks, siteUrl.origin);
-    const focus = detectSiteFocus(`${cleanedBody} ${extractMetaDescription(remote.homeResult.text || '')}`, hints);
-    const siteTitle = sentenceCase(guessStoreTitle(extractTitle(remote.homeResult.text || ''), siteUrl.hostname));
-    const tagline = guessTagline(extractMetaDescription(remote.homeResult.text || ''), cleanedBody, hints);
+    const primarySourceText = remote.primarySource?.text || remote.homeResult.text || '';
+    const focus = detectSiteFocus(`${cleanedBody} ${extractMetaDescription(primarySourceText)}`, hints);
+    const siteTitle = sentenceCase(guessStoreTitle(extractTitle(primarySourceText), siteUrl.hostname));
+    const tagline = guessTagline(extractMetaDescription(primarySourceText), cleanedBody, hints);
     const aiProfile = describeBusiness(siteTitle, tagline, focus);
     const sitemaps = detectSitemaps(remote.readableSources, siteUrl.origin).map((url, index) => ({
       label: index === 0 ? 'Основная sitemap' : `Дополнительная sitemap ${index}`,
       url
     }));
-    const officialSources = buildOfficialSources(siteUrl, servicePages, blogPages);
+    const officialSources = buildOfficialSources(siteUrl, servicePages, blogPages, remote.combinedLinks);
     const priorityLinks = buildPriorityLinks(siteUrl, servicePages, blogPages, focus, remote.combinedLinks);
     const rules = buildRules(focus, servicePages, blogPages);
     const faq = buildFaq(siteTitle, focus, servicePages, blogPages);
@@ -930,7 +1022,7 @@ async function runAdvisor() {
       products_sort_order: '20',
       product_ids: [],
       pages_status: '1',
-      pages_mode: servicePages.length ? 'specific' : 'all',
+      pages_mode: 'all',
       pages_description_mode: 'meta',
       pages_description_limit: '300',
       pages_sort_order: '30',
@@ -971,6 +1063,7 @@ async function runAdvisor() {
       customBlocks,
       recommendations
     });
+    const jsonMeta = getJsonMeta(latestDownloadPayload);
 
     const readMode = remote.readableSources.length > 0
       ? `Удалось прочитать ${remote.readableSources.length} источник(а). Основной режим: ${remote.homeResult.source === 'none' ? 'fallback only' : remote.homeResult.source}.`
@@ -1002,7 +1095,9 @@ async function runAdvisor() {
     hideSkeletons();
     hideOverlay();
     downloadJsonButton.disabled = false;
+    previewJsonButton.disabled = false;
     showFloatingDownload();
+    jsonMetaNote.textContent = `Файл готов к скачиванию: ${jsonMeta.fileName} • размер примерно ${formatBytes(jsonMeta.bytes)}. Можно сначала открыть JSON и проверить его вручную.`;
     llmsPreview.textContent = formatPreview({
       siteTitle,
       tagline,
@@ -1032,6 +1127,9 @@ async function runAdvisor() {
     exportsList.innerHTML = '<div class="placeholder">Экспорт появится после успешного анализа.</div>';
     llmsPreview.textContent = '# Preview появится после анализа';
     downloadJsonButton.disabled = true;
+    previewJsonButton.disabled = true;
+    jsonMetaNote.textContent = 'Этот файл пригодится для будущего импорта настроек прямо в админке модуля.';
+    jsonPreviewCard.hidden = true;
     setStatus('error', error.message || 'Не удалось обработать сайт.');
   } finally {
     analyzeButton.classList.remove('btn--loading');

@@ -93,16 +93,31 @@ body {
 
 .hero__bullets {
   display: grid;
-  gap: 14px;
-  margin-top: 22px;
+  gap: 8px;
+  margin-top: 18px;
 }
 
 .hero__bullet {
-  padding: 15px 17px;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: var(--shadow-soft);
+  position: relative;
+  padding-left: 16px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.hero__bullet::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.hero__bullet strong {
+  color: var(--text);
 }
 
 .intake-card {
@@ -401,6 +416,12 @@ select:focus {
   border: 1px solid var(--border);
   border-radius: 18px;
   background: var(--surface-strong);
+}
+
+.exports-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .exports-toolbar__note {
@@ -838,6 +859,11 @@ a {
   .exports-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .exports-toolbar__actions {
+    width: 100%;
+    flex-direction: column;
   }
 
   .export-item__tools {
