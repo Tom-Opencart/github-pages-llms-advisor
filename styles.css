@@ -181,10 +181,136 @@ select:focus {
   box-shadow: 0 0 0 4px rgba(31, 122, 224, 0.12);
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
+  .actions {
+    flex-direction: column;
+  }
+}
+
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.status-box--working .status-box__text {
+  display: inline-flex;
+  align-items: center;
+}
+
+.status-box--working {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.btn--loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.75;
+  padding-left: 40px;
+}
+
+.btn--loading::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #eef3f9 25%, #dce7f5 50%, #eef3f9 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+.skeleton--text {
+  height: 14px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.skeleton--text-short {
+  height: 14px;
+  margin-bottom: 10px;
+  width: 60%;
+}
+
+.skeleton--title {
+  height: 20px;
+  margin-bottom: 14px;
+  width: 40%;
+  border-radius: 10px;
+}
+
+.skeleton--block {
+  min-height: 80px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+}
+
+.skeleton--card {
+  min-height: 140px;
+  padding: 18px;
+  display: grid;
   gap: 10px;
+}
+
+.card--fade {
+  animation: fadeIn 0.45s ease-out both;
+}
+
+@for $i from 1 through 6 {
+  .card--fade:nth-child(#{$i}) {
+    animation-delay: calc(#{$i} * 0.06s);
+  }
+}
+
+.card--fade:nth-child(1) { animation-delay: 0s; }
+.card--fade:nth-child(2) { animation-delay: 0.06s; }
+.card--fade:nth-child(3) { animation-delay: 0.12s; }
+.card--fade:nth-child(4) { animation-delay: 0.18s; }
+.card--fade:nth-child(5) { animation-delay: 0.24s; }
+.card--fade:nth-child(6) { animation-delay: 0.30s; }
+.card--fade:nth-child(7) { animation-delay: 0.36s; }
+.card--fade:nth-child(8) { animation-delay: 0.42s; }
+.card--fade:nth-child(9) { animation-delay: 0.48s; }
+.card--fade:nth-child(10) { animation-delay: 0.54s; }
+
+.preview-box--loading {
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 .btn {

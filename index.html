@@ -77,10 +77,13 @@
             </div>
           </form>
 
-          <div id="status-box" class="status-box status-box--idle">
+        <div id="status-box" class="status-box status-box--idle">
+          <span class="status-box__text">
+            <span class="spinner" hidden></span>
             <strong>Статус:</strong>
             <span id="status-text">Ожидает URL сайта.</span>
-          </div>
+          </span>
+        </div>
 
           <div class="intake-card__footnote">
             Сначала инструмент пробует читать сайт напрямую через браузер. Если сайт блокирует CORS, включается fallback через публичный текстовый прокси.

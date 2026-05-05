@@ -5,11 +5,11 @@ const analyzeButton = document.getElementById('analyze-button');
 const demoButton = document.getElementById('demo-button');
 const statusBox = document.getElementById('status-box');
 const statusText = document.getElementById('status-text');
+const statusSpinner = statusBox.querySelector('.spinner');
 const discoveryGrid = document.getElementById('discovery-grid');
 const recommendationsBox = document.getElementById('module-recommendations');
 const exportsList = document.getElementById('exports-list');
 const llmsPreview = document.getElementById('llms-preview');
-const downloadJsonButton = document.getElementById('download-json-button');
 
 const discoveryTemplate = document.getElementById('discovery-item-template');
 const exportTemplate = document.getElementById('export-item-template');
@@ -73,6 +73,7 @@ downloadJsonButton.addEventListener('click', () => {
 function setStatus(type, text) {
   statusBox.className = `status-box status-box--${type}`;
   statusText.textContent = text;
+  statusSpinner.hidden = type !== 'working';
 }
 
 function sanitizeMultiline(value) {
@@ -823,10 +824,41 @@ function renderExports(exportsData) {
   });
 }
 
+function showSkeletons() {
+  const skeletonCard = (title) => `
+    <div class="skeleton skeleton--card">
+      <div class="skeleton skeleton--title"></div>
+      <div class="skeleton skeleton--text"></div>
+      <div class="skeleton skeleton--text-short"></div>
+    </div>`;
+
+  discoveryGrid.innerHTML = `<div class="discovery-grid">${skeletonCard('')}${skeletonCard('')}${skeletonCard('')}${skeletonCard('')}${skeletonCard('')}${skeletonCard('')}</div>`;
+  recommendationsBox.innerHTML = `${skeletonCard('')}${skeletonCard('')}${skeletonCard('')}`;
+  exportsList.innerHTML = `${skeletonCard('')}${skeletonCard('')}${skeletonCard('')}`;
+  llmsPreview.className = 'preview-box preview-box--loading';
+  llmsPreview.textContent = '';
+}
+
+function hideSkeletons() {
+  llmsPreview.className = 'preview-box';
+}
+
+function addFadeIn(parent) {
+  const items = [...parent.children].filter((el) =>
+    el.matches('article, .discovery-item, .recommendation-block, .export-item')
+  );
+  items.forEach((item, i) => {
+    item.classList.add('card--fade');
+    item.style.animationDelay = `${i * 0.06}s`;
+  });
+}
 async function runAdvisor() {
   analyzeButton.disabled = true;
+  analyzeButton.classList.add('btn--loading');
+  demoButton.disabled = true;
   downloadJsonButton.disabled = true;
   latestDownloadPayload = null;
+  showSkeletons();
   setStatus('working', 'Пробую прочитать сайт, sitemap и служебные страницы...');
 
   try {
@@ -928,9 +960,15 @@ async function runAdvisor() {
       ].filter(Boolean),
       errors: remote.fetchErrors
     });
+    addFadeIn(discoveryGrid);
 
     renderRecommendations(settings);
+    addFadeIn(recommendationsBox);
+
     renderExports(exportsData);
+    addFadeIn(exportsList);
+
+    hideSkeletons();
     downloadJsonButton.disabled = false;
     llmsPreview.textContent = formatPreview({
       siteTitle,
@@ -952,6 +990,7 @@ async function runAdvisor() {
       setStatus('success', 'Анализ завершён. Сначала прочитайте рекомендации, затем откройте нужные поля и копируйте только то, что подходит вашему магазину.');
     }
   } catch (error) {
+    hideSkeletons();
     discoveryGrid.innerHTML = '<div class="placeholder">Анализ не выполнен. Проверьте URL и попробуйте ещё раз.</div>';
     recommendationsBox.innerHTML = '<div class="placeholder">Рекомендации пока не собраны.</div>';
     exportsList.innerHTML = '<div class="placeholder">Экспорт появится после успешного анализа.</div>';
@@ -959,6 +998,8 @@ async function runAdvisor() {
     downloadJsonButton.disabled = true;
     setStatus('error', error.message || 'Не удалось обработать сайт.');
   } finally {
+    analyzeButton.classList.remove('btn--loading');
     analyzeButton.disabled = false;
+    demoButton.disabled = false;
   }
 }
