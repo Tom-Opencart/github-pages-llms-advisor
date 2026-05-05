@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LLMS Setup Advisor for OpenCart</title>
+  <meta name="description" content="Статический помощник для настройки LLMS.txt Generator: анализирует сайт, собирает sitemap, сервисные страницы, FAQ и подсказывает готовые поля для модуля OpenCart.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero__badge">GitHub Pages Ready</div>
+      <h1>LLMS Setup Advisor</h1>
+      <p class="hero__lead">
+        Вставьте ссылку на сайт и получите стартовый набор инструкций именно под модуль
+        <strong>LLMS.txt Generator для OpenCart</strong>.
+      </p>
+      <div class="hero__notes">
+        <div class="hero__note">
+          <strong>Что это делает:</strong>
+          аккуратно собирает sitemap, сервисные страницы, новости, обзоры, приоритетные ссылки и готовые тексты для AI-блока.
+        </div>
+        <div class="hero__note">
+          <strong>Чего не обещает:</strong>
+          это помощник по настройке, а не гарантия идеальной индексации и не волшебный генератор результата.
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="card card--sticky">
+        <div class="card__head">
+          <h2>1. Анализ сайта</h2>
+          <p>Инструмент работает полностью на клиенте и подходит для размещения на GitHub Pages.</p>
+        </div>
+
+        <form id="advisor-form" class="form-stack">
+          <label class="field">
+            <span class="field__label">URL сайта</span>
+            <input
+              id="site-url"
+              name="site-url"
+              type="url"
+              inputmode="url"
+              placeholder="https://example.com"
+              autocomplete="url"
+              required
+            >
+            <span class="field__help">
+              Лучше указывать главную страницу магазина. Инструмент сам попробует найти sitemap, сервисные страницы и блог.
+            </span>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Дополнительные подсказки (необязательно)</span>
+            <textarea
+              id="manual-hints"
+              name="manual-hints"
+              rows="5"
+              placeholder="Например: магазин упаковки для маркетплейсов, есть блог, важны страницы доставки и оплаты."
+            ></textarea>
+            <span class="field__help">
+              Если сайт защищён от чтения или плохо размечен, эта подсказка поможет точнее собрать AI-профиль и FAQ.
+            </span>
+          </label>
+
+          <div class="actions">
+            <button type="submit" class="btn btn--primary" id="analyze-button">Анализировать сайт</button>
+            <button type="button" class="btn btn--ghost" id="demo-button">Загрузить демо</button>
+          </div>
+        </form>
+
+        <div id="status-box" class="status-box status-box--idle">
+          <strong>Статус:</strong>
+          <span id="status-text">Ожидает URL сайта.</span>
+        </div>
+
+        <div class="card__subhead">
+          <h3>Как это работает на GitHub Pages</h3>
+        </div>
+        <ul class="plain-list">
+          <li>Сначала инструмент пробует читать сайт напрямую через браузер.</li>
+          <li>Если сайт блокирует CORS, включается безопасный fallback через публичный текстовый прокси.</li>
+          <li>Если и это не помогает, вы всё равно получите полуавтоматический шаблон на основе URL и ваших подсказок.</li>
+        </ul>
+      </section>
+
+      <section class="results">
+        <section class="card" id="discovery-card">
+          <div class="card__head">
+            <h2>2. Что найдено</h2>
+            <p>Быстрая карта сайта перед формированием рекомендаций.</p>
+          </div>
+          <div id="discovery-grid" class="discovery-grid">
+            <div class="placeholder">После анализа здесь появятся sitemap, сервисные страницы, новости, обзоры и приоритетные URL.</div>
+          </div>
+        </section>
+
+        <section class="card" id="recommendations-card">
+          <div class="card__head">
+            <h2>3. Рекомендации для модуля</h2>
+            <p>Подсказки именно в логике LLMS.txt Generator.</p>
+          </div>
+          <div id="module-recommendations" class="module-recommendations">
+            <div class="placeholder">Здесь будут рекомендации по AI-профилю, FAQ, стандартным разделам и кастомным блокам.</div>
+          </div>
+        </section>
+
+        <section class="card" id="exports-card">
+          <div class="card__head">
+            <h2>4. Готово к вставке в модуль</h2>
+            <p>Каждый блок можно копировать отдельно.</p>
+          </div>
+          <div id="exports-list" class="exports-list">
+            <div class="placeholder">После анализа здесь появятся готовые поля для копирования в OpenCart.</div>
+          </div>
+        </section>
+
+        <section class="card" id="preview-card">
+          <div class="card__head">
+            <h2>5. Черновой preview llms.txt</h2>
+            <p>Небольшой ориентир, как может выглядеть структура после настройки модуля.</p>
+          </div>
+          <pre id="llms-preview" class="preview-box"># Preview появится после анализа</pre>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <template id="discovery-item-template">
+    <article class="discovery-item">
+      <div class="discovery-item__title"></div>
+      <div class="discovery-item__content"></div>
+    </article>
+  </template>
+
+  <template id="export-item-template">
+    <article class="export-item">
+      <div class="export-item__head">
+        <div>
+          <h3 class="export-item__title"></h3>
+          <p class="export-item__hint"></p>
+        </div>
+        <button type="button" class="btn btn--small btn--ghost export-copy">Копировать</button>
+      </div>
+      <textarea class="export-item__textarea" rows="8" readonly></textarea>
+    </article>
+  </template>
+
+  <script src="./app.js"></script>
+</body>
+</html>
