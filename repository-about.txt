@@ -1,0 +1,23 @@
+Repository name idea:
+llms-setup-advisor
+
+Short description:
+Static GitHub Pages tool that analyzes a website and prepares starter LLMS.txt Generator settings for OpenCart.
+
+Russian short description:
+Статический помощник для GitHub Pages, который анализирует сайт и готовит стартовые настройки LLMS.txt Generator для OpenCart.
+
+Longer about text:
+LLMS Setup Advisor helps store owners analyze a website, detect sitemap and key pages, and generate practical starter recommendations for configuring llms.txt through the LLMS.txt Generator module.
+
+Suggested topics:
+llms
+llms-txt
+opencart
+github-pages
+seo
+ai
+llm
+aio
+website-analysis
+static-site

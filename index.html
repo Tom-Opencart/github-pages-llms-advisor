@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LLMS Setup Advisor for OpenCart</title>
+  <meta name="description" content="Статический помощник для настройки LLMS.txt Generator: анализирует сайт, собирает sitemap, сервисные страницы, FAQ и подсказывает готовые поля для модуля OpenCart.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero__topline">
+        <div class="hero__badge">GitHub Pages Ready</div>
+        <div class="hero__microcopy">Статический помощник для настройки llms.txt без сервера и сборки</div>
+      </div>
+
+      <div class="hero__main">
+        <div class="hero__copy">
+          <h1>LLMS Setup Advisor</h1>
+          <p class="hero__lead">
+            Вставьте ссылку на сайт и получите понятную стартовую конфигурацию именно под модуль
+            <strong>LLMS.txt Generator для OpenCart</strong>.
+          </p>
+          <div class="hero__bullets">
+            <div class="hero__bullet">
+              <strong>Что делает:</strong>
+              собирает sitemap, сервисные страницы, статьи, FAQ и готовые поля для вставки в модуль.
+            </div>
+            <div class="hero__bullet">
+              <strong>Как использовать:</strong>
+              сначала проверьте, что найдено на сайте, затем прочитайте рекомендации, и только после этого копируйте готовые блоки.
+            </div>
+            <div class="hero__bullet">
+              <strong>Важно:</strong>
+              это помощник по настройке, а не гарантия результата. Финальную конфигурацию всё равно стоит проверить вручную.
+            </div>
+          </div>
+        </div>
+
+        <section class="intake-card">
+          <div class="intake-card__head">
+            <h2>Шаг 1. Введите сайт</h2>
+            <p>Лучше указывать главную страницу магазина. Инструмент сам попробует найти sitemap, сервисные страницы и блог.</p>
+          </div>
+
+          <form id="advisor-form" class="form-stack">
+            <label class="field">
+              <span class="field__label">URL сайта</span>
+              <input
+                id="site-url"
+                name="site-url"
+                type="url"
+                inputmode="url"
+                placeholder="https://example.com"
+                autocomplete="url"
+                required
+              >
+            </label>
+
+            <label class="field">
+              <span class="field__label">Дополнительные подсказки</span>
+              <textarea
+                id="manual-hints"
+                name="manual-hints"
+                rows="4"
+                placeholder="Например: магазин упаковки для маркетплейсов, важны страницы доставки, оплаты, статей и обзоров."
+              ></textarea>
+              <span class="field__help">
+                Если сайт защищён от чтения или размечен не очень понятно, короткая подсказка поможет точнее собрать AI-профиль и FAQ.
+              </span>
+            </label>
+
+            <div class="actions">
+              <button type="submit" class="btn btn--primary" id="analyze-button">Анализировать сайт</button>
+              <button type="button" class="btn btn--ghost" id="demo-button">Загрузить демо</button>
+            </div>
+          </form>
+
+          <div id="status-box" class="status-box status-box--idle">
+            <strong>Статус:</strong>
+            <span id="status-text">Ожидает URL сайта.</span>
+          </div>
+
+          <div class="intake-card__footnote">
+            Сначала инструмент пробует читать сайт напрямую через браузер. Если сайт блокирует CORS, включается fallback через публичный текстовый прокси.
+          </div>
+        </section>
+      </div>
+    </header>
+
+    <main class="results-shell">
+      <section class="summary-strip" id="summary-strip">
+        <article class="summary-tile">
+          <div class="summary-tile__kicker">Шаг 2</div>
+          <h2>Что найдено</h2>
+          <p>Короткая карта сайта: sitemap, сервисные страницы, блог, обзоры и сигналы B2B / маркетплейсов.</p>
+        </article>
+        <article class="summary-tile">
+          <div class="summary-tile__kicker">Шаг 3</div>
+          <h2>Что рекомендуется</h2>
+          <p>Не просто сырые данные, а советы именно под структуру LLMS.txt Generator.</p>
+        </article>
+        <article class="summary-tile">
+          <div class="summary-tile__kicker">Шаг 4</div>
+          <h2>Что копировать</h2>
+          <p>Готовые поля для вставки в модуль, свернутые в удобные компактные блоки.</p>
+        </article>
+      </section>
+
+      <section class="analysis-flow">
+        <section class="card" id="discovery-card">
+          <div class="card__head">
+            <h2>Шаг 2. Что найдено на сайте</h2>
+            <p>Сначала стоит убедиться, что найденные разделы выглядят логично для вашего магазина.</p>
+          </div>
+          <div id="discovery-grid" class="discovery-grid">
+            <div class="placeholder">После анализа здесь появятся sitemap, сервисные страницы, новости, обзоры и ключевые признаки сайта.</div>
+          </div>
+        </section>
+
+        <section class="card" id="recommendations-card">
+          <div class="card__head">
+            <h2>Шаг 3. Что лучше включить в модуле</h2>
+            <p>Это главный блок страницы. Он нужен не для копирования, а для понимания общей стратегии настройки.</p>
+          </div>
+          <div id="module-recommendations" class="module-recommendations">
+            <div class="placeholder">Здесь будут рекомендации по AI-профилю, FAQ, стандартным разделам и кастомным блокам.</div>
+          </div>
+        </section>
+
+        <section class="card" id="exports-card">
+          <div class="card__head">
+            <h2>Шаг 4. Готовые поля для вставки в модуль</h2>
+            <p>Открывайте только нужный блок. Так страница не превращается в длинную техническую простыню.</p>
+          </div>
+          <div class="exports-toolbar">
+            <button type="button" class="btn btn--primary" id="download-json-button" disabled>Скачать JSON для модуля</button>
+            <div class="exports-toolbar__note">
+              Этот файл пригодится для будущего импорта настроек прямо в админке модуля.
+            </div>
+          </div>
+          <div id="exports-list" class="exports-list">
+            <div class="placeholder">После анализа здесь появятся сворачиваемые блоки с готовым текстом для OpenCart.</div>
+          </div>
+        </section>
+
+        <section class="card card--secondary" id="preview-card">
+          <div class="card__head">
+            <h2>Шаг 5. Черновой preview llms.txt</h2>
+            <p>Это дополнительный ориентир. Полезно посмотреть его в конце, когда рекомендации уже понятны.</p>
+          </div>
+          <pre id="llms-preview" class="preview-box"># Preview появится после анализа</pre>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <template id="discovery-item-template">
+    <article class="discovery-item">
+      <div class="discovery-item__title"></div>
+      <div class="discovery-item__content"></div>
+    </article>
+  </template>
+
+  <template id="export-item-template">
+    <details class="export-item">
+      <summary class="export-item__summary">
+        <div class="export-item__summary-main">
+          <h3 class="export-item__title"></h3>
+          <p class="export-item__hint"></p>
+        </div>
+        <span class="export-item__state">Открыть</span>
+      </summary>
+      <div class="export-item__body">
+        <div class="export-item__tools">
+          <button type="button" class="btn btn--small btn--ghost export-copy">Копировать</button>
+        </div>
+        <textarea class="export-item__textarea" rows="8" readonly></textarea>
+      </div>
+    </details>
+  </template>
+
+  <script src="./app.js"></script>
+</body>
+</html>
