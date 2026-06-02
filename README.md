@@ -78,3 +78,5 @@
 - сохранение истории анализов в `localStorage`;
 - режимы "OpenCart", "Shopify", "WordPress", "другое";
 - импорт данных прямо в формат полей модуля с более точной валидацией.
+
+- https://tom-opencart.github.io/github-pages-llms-advisor/
