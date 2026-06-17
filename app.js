@@ -30,6 +30,8 @@ const guessTagline = advisorCore.guessTagline || ((metaDescription, cleanedBody,
     .find(Boolean) || '';
 });
 const sanitizeNarrativeText = advisorCore.sanitizeNarrativeText || ((text) => String(text || '').trim());
+const buildMeaningfulTagline = advisorCore.buildMeaningfulTagline || ((context) => context.tagline || `${context.title} — сайт с каталогом и страницами для клиентов.`);
+const buildMeaningfulProfile = advisorCore.buildMeaningfulProfile || ((context) => context.tagline || `${context.title} — сайт с каталогом и страницами для клиентов.`);
 
 const SERVICE_HINTS = [
   { key: 'about', label: 'О компании', patterns: ['/about', '/o-kompanii', '/about-us', '/company', '/about/'] },
@@ -454,26 +456,6 @@ function guessStoreTitle(title, hostname) {
 
 function sentenceCase(text) {
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
-}
-
-function describeBusiness(title, tagline, focus) {
-  const parts = [];
-
-  parts.push(tagline || `${title} — сайт с каталогом и страницами для клиентов.`);
-
-  if (focus.marketplace) {
-    parts.push('Отдельно учитывайте сценарии, связанные с маркетплейсами и требованиями к упаковке, логистике или карточкам товаров.');
-  }
-
-  if (focus.b2b) {
-    parts.push('Сайт имеет выраженный B2B-контекст, поэтому AI стоит учитывать оптовые заказы, корпоративные закупки и сервисные страницы.');
-  }
-
-  if (focus.ecommerce) {
-    parts.push('Для ассортимента, условий заказа и характеристик основным источником должны быть каталог, карточки товаров и сервисные страницы.');
-  }
-
-  return parts.join(' ');
 }
 
 function dedupeLabeledLinks(items) {
@@ -996,8 +978,20 @@ async function runAdvisor() {
     const blogPages = findBlogPages(remote.combinedLinks, siteUrl.origin);
     const focus = detectSiteFocus(`${cleanedBody} ${extractMetaDescription(primarySourceText)}`, hints);
     const siteTitle = sentenceCase(guessStoreTitle(extractTitle(primarySourceText), siteUrl.hostname));
-    const tagline = guessTagline(extractMetaDescription(primarySourceText), cleanedBody, hints);
-    const aiProfile = describeBusiness(siteTitle, tagline, focus);
+    const tagline = buildMeaningfulTagline({
+      title: siteTitle,
+      tagline: guessTagline(extractMetaDescription(primarySourceText), cleanedBody, hints),
+      focus,
+      servicePages,
+      blogPages
+    });
+    const aiProfile = buildMeaningfulProfile({
+      title: siteTitle,
+      tagline,
+      focus,
+      servicePages,
+      blogPages
+    });
     const sitemaps = detectSitemaps(remote.readableSources, siteUrl.origin).map((url, index) => ({
       label: index === 0 ? 'Основная sitemap' : `Дополнительная sitemap ${index}`,
       url

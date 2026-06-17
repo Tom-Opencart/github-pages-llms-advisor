@@ -59,9 +59,71 @@
     return candidates.find(Boolean) || '';
   }
 
+  function buildMeaningfulTagline(context) {
+    const title = sanitizeNarrativeText(context && context.title);
+    const tagline = sanitizeNarrativeText(context && context.tagline);
+    const focus = context && context.focus ? context.focus : {};
+    const servicePages = Array.isArray(context && context.servicePages) ? context.servicePages : [];
+    const blogPages = Array.isArray(context && context.blogPages) ? context.blogPages : [];
+
+    if (tagline) {
+      return tagline;
+    }
+
+    if (focus.ecommerce && servicePages.length && blogPages.length) {
+      return 'Интернет-магазин с каталогом товаров, сервисными страницами и справочными материалами.';
+    }
+
+    if (focus.ecommerce && servicePages.length) {
+      return 'Интернет-магазин с каталогом товаров и основными сервисными страницами для клиентов.';
+    }
+
+    if (focus.marketplace && focus.b2b) {
+      return 'Сайт с товарами и материалами для бизнеса и маркетплейсов.';
+    }
+
+    if (focus.marketplace) {
+      return 'Сайт с каталогом товаров и материалами для сценариев маркетплейсов.';
+    }
+
+    if (focus.b2b) {
+      return 'Сайт с каталогом товаров и B2B-контекстом для корпоративных и оптовых запросов.';
+    }
+
+    if (focus.ecommerce) {
+      return 'Интернет-магазин с каталогом товаров и сервисными страницами для клиентов.';
+    }
+
+    return title ? `${title} — сайт с каталогом и страницами для клиентов.` : 'Сайт с каталогом и страницами для клиентов.';
+  }
+
+  function buildMeaningfulProfile(context) {
+    const focus = context && context.focus ? context.focus : {};
+    const parts = [];
+    const tagline = buildMeaningfulTagline(context);
+
+    parts.push(tagline);
+
+    if (focus.marketplace) {
+      parts.push('Отдельно учитывайте сценарии, связанные с маркетплейсами и требованиями к упаковке, логистике или карточкам товаров.');
+    }
+
+    if (focus.b2b) {
+      parts.push('Сайт имеет выраженный B2B-контекст, поэтому AI стоит учитывать оптовые заказы, корпоративные закупки и сервисные страницы.');
+    }
+
+    if (focus.ecommerce) {
+      parts.push('Для ассортимента, условий заказа и характеристик основным источником должны быть каталог, карточки товаров и сервисные страницы.');
+    }
+
+    return parts.join(' ').trim();
+  }
+
   return {
     looksTechnicalText,
     sanitizeNarrativeText,
-    guessTagline
+    guessTagline,
+    buildMeaningfulTagline,
+    buildMeaningfulProfile
   };
 });
