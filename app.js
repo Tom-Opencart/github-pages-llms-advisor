@@ -23,6 +23,13 @@ const analysisOverlay = document.getElementById('analysis-overlay');
 const overlayHint = document.getElementById('overlay-hint');
 const resultsShell = document.getElementById('results-shell');
 let latestDownloadPayload = null;
+const advisorCore = window.LlmsAdvisorCore || {};
+const guessTagline = advisorCore.guessTagline || ((metaDescription, cleanedBody, hints) => {
+  return [metaDescription, hints, String(cleanedBody || '').slice(0, 260)]
+    .map((part) => String(part || '').trim())
+    .find(Boolean) || '';
+});
+const sanitizeNarrativeText = advisorCore.sanitizeNarrativeText || ((text) => String(text || '').trim());
 
 const SERVICE_HINTS = [
   { key: 'about', label: 'О компании', patterns: ['/about', '/o-kompanii', '/about-us', '/company', '/about/'] },
@@ -443,10 +450,6 @@ function guessStoreTitle(title, hostname) {
   }
 
   return slugifyHostname(hostname).replace(/-/g, ' ');
-}
-
-function guessTagline(metaDescription, cleanedBody, hints) {
-  return pickLongestText([metaDescription, hints, cleanedBody.slice(0, 220)]).slice(0, 260).trim();
 }
 
 function sentenceCase(text) {
@@ -987,10 +990,10 @@ async function runAdvisor() {
     const siteUrl = normalizeUrl(siteUrlInput.value);
     const hints = sanitizeMultiline(manualHintsInput.value);
     const remote = await collectRemoteData(siteUrl);
-    const cleanedBody = cleanText(remote.combined);
+    const primarySourceText = remote.primarySource?.text || remote.homeResult.text || '';
+    const cleanedBody = sanitizeNarrativeText(cleanText(primarySourceText));
     const servicePages = findServicePages(remote.combinedLinks, siteUrl.origin);
     const blogPages = findBlogPages(remote.combinedLinks, siteUrl.origin);
-    const primarySourceText = remote.primarySource?.text || remote.homeResult.text || '';
     const focus = detectSiteFocus(`${cleanedBody} ${extractMetaDescription(primarySourceText)}`, hints);
     const siteTitle = sentenceCase(guessStoreTitle(extractTitle(primarySourceText), siteUrl.hostname));
     const tagline = guessTagline(extractMetaDescription(primarySourceText), cleanedBody, hints);
