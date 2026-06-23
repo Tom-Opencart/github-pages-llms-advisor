@@ -2,6 +2,8 @@
 
 Статический помощник для настройки модуля `LLMS.txt Generator` под OpenCart и другие магазины с похожей структурой.
 
+- https://tom-opencart.github.io/github-pages-llms-advisor/
+
 ## Кратко
 
 Пользователь вставляет URL сайта и получает стартовый набор рекомендаций для настройки `llms.txt` через модуль:
@@ -78,5 +80,3 @@
 - сохранение истории анализов в `localStorage`;
 - режимы "OpenCart", "Shopify", "WordPress", "другое";
 - импорт данных прямо в формат полей модуля с более точной валидацией.
-
-- https://tom-opencart.github.io/github-pages-llms-advisor/
