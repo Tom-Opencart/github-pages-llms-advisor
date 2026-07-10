@@ -620,6 +620,7 @@
     const exportData = collectExportData(reviewStateStore.current);
     const payload = buildJsonDownloadPayload(exportData);
     latestDownloadPayload = payload;
+    window.latestDownloadPayload = payload;
 
     if (exportButton) {
       exportButton.disabled = false;
@@ -639,6 +640,7 @@
     reviewStateStore.current = buildReviewState(base);
     renderReviewPanel(reviewStateStore.current);
     refreshExportState();
+    return reviewStateStore.current;
   }
 
   if (reviewShell) {
@@ -651,6 +653,15 @@
   }
 
   window.buildJsonDownloadPayload = buildJsonDownloadPayload;
+  window.buildReviewState = buildReviewState;
+  window.setReviewState = setReviewState;
+  window.collectReviewExportData = collectExportData;
+  window.refreshReviewExportState = refreshExportState;
+  window.showReviewHint = function showReviewHint(text) {
+    if (reviewShell && !reviewShell.querySelector('[data-review-id]')) {
+      reviewShell.innerHTML = `<div class="review-empty">${escapeHtml(text)}</div>`;
+    }
+  };
 
   window.runAdvisor = async function runAdvisor() {
     ensureStyles();
@@ -676,6 +687,7 @@
       floatingDownload.hidden = true;
     }
     latestDownloadPayload = null;
+    window.latestDownloadPayload = null;
     if (jsonPreviewCard) {
       jsonPreviewCard.hidden = true;
     }
@@ -786,9 +798,27 @@
         focus,
         primarySourceText
       };
-      setReviewState(reviewBase);
-      const exportData = collectExportData(reviewStateStore.current);
+      if (typeof window.setReviewState === 'function') {
+        window.setReviewState(reviewBase);
+      } else if (typeof window.buildReviewState === 'function') {
+        window.buildReviewState(reviewBase);
+      }
+      const exportData = collectExportData(reviewStateStore.current || window.reviewState || {
+        siteUrl: siteUrl.href,
+        siteTitle,
+        tagline,
+        aiProfile,
+        sitemaps,
+        officialSources,
+        priorityLinks,
+        rules,
+        faq,
+        urlLogic,
+        customBlocks,
+        recommendations
+      });
       latestDownloadPayload = buildJsonDownloadPayload(exportData);
+      window.latestDownloadPayload = latestDownloadPayload;
       const jsonMeta = getJsonMeta(latestDownloadPayload);
 
       if (typeof renderDiscovery === 'function') {
@@ -863,6 +893,7 @@
       } else {
         setStatus('success', 'Анализ завершён. Сначала прочитайте рекомендации, затем проверьте review и копируйте только то, что подходит вашему магазину.');
       }
+      setTimeout(() => scrollToResults(), 200);
     } catch (error) {
       if (typeof hideSkeletons === 'function') {
         hideSkeletons();
