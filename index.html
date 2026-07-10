@@ -152,29 +152,34 @@
 
         <section class="card" id="exports-card">
           <div class="card__head">
-            <h2>Шаг 4. Готовые поля для вставки в модуль</h2>
-            <p>Открывайте только нужный блок. Так страница не превращается в длинную техническую простыню.</p>
+            <h2>Шаг 4. Поля модуля: что и в каком формате заполнять</h2>
+            <p>Для каждого поля показано пояснение и пример формата. Готовые данные вашего сайта не выводятся здесь текстом — они попадают в JSON для импорта в модуль. Сам файл llms.txt формирует и размещает в корне сайта модуль LLMS.txt Generator.</p>
           </div>
           <div class="exports-toolbar">
             <div class="exports-toolbar__actions">
               <button type="button" class="btn btn--primary" id="download-json-button" disabled>Скачать JSON для модуля</button>
               <button type="button" class="btn btn--ghost" id="preview-json-button" disabled>Показать JSON</button>
+              <a class="btn btn--ghost" href="https://liveopencart.ru/opencart-moduli-shablony/moduli/marketing-konversiya/llms-txt-generator" target="_blank" rel="noopener noreferrer">Купить модуль</a>
             </div>
             <div class="exports-toolbar__note" id="json-meta-note">
-              Этот файл пригодится для будущего импорта настроек прямо в админке модуля.
+              Этот файл импортируется прямо в админке модуля — он заполнит поля вашими данными автоматически.
             </div>
           </div>
           <div id="exports-list" class="exports-list">
-            <div class="placeholder">После анализа здесь появятся сворачиваемые блоки с готовым текстом для OpenCart.</div>
+            <div class="placeholder">После анализа здесь появятся пояснения и примеры формата для каждого поля модуля.</div>
           </div>
         </section>
 
         <section class="card card--secondary" id="preview-card">
           <div class="card__head">
-            <h2>Шаг 5. Черновой preview llms.txt</h2>
-            <p>Это дополнительный ориентир. Полезно посмотреть его в конце, когда рекомендации уже понятны.</p>
+            <h2>Шаг 5. Структура будущего llms.txt</h2>
+            <p>Здесь показана только карта разделов и пояснение, что попадёт в каждый из них. Готовый файл llms.txt собирает и размещает в корне сайта модуль LLMS.txt Generator.</p>
           </div>
-          <pre id="llms-preview" class="preview-box"># Preview появится после анализа</pre>
+          <pre id="llms-preview" class="preview-box">Структура появится после анализа</pre>
+          <div class="preview-cta">
+            Готовый файл собирается внутри модуля.
+            <a href="https://liveopencart.ru/opencart-moduli-shablony/moduli/marketing-konversiya/llms-txt-generator" target="_blank" rel="noopener noreferrer">Открыть страницу модуля LLMS.txt Generator →</a>
+          </div>
         </section>
 
         <section class="card card--secondary" id="json-preview-card" hidden>

@@ -56,6 +56,8 @@ const ECOM_WORDS = ['интернет-магазин', 'доставка', 'ка
 const DEMO_SITE = 'https://standartpak.ru';
 const DEMO_HINTS = 'магазин упаковки для бизнеса и маркетплейсов, важны сервисные страницы, статьи и обзоры';
 
+const MODULE_PURCHASE_URL = 'https://liveopencart.ru/opencart-moduli-shablony/moduli/marketing-konversiya/llms-txt-generator';
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   await runAdvisor();
@@ -686,52 +688,126 @@ function formatCustomBlock(block) {
   return block.entries.map((entry) => `${entry.title}|${entry.url}|${entry.description}`).join('\n');
 }
 
+function formatSectionCount(count, forms) {
+  const value = Number(count) || 0;
+  const mod10 = value % 10;
+  const mod100 = value % 100;
+  let word = forms[2];
+
+  if (mod10 === 1 && mod100 !== 11) {
+    word = forms[0];
+  } else if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+    word = forms[1];
+  }
+
+  return `${value} ${word}`;
+}
+
 function formatPreview(data) {
+  const customCount = data.customBlocks.reduce((total, block) => total + block.entries.length, 0);
+
   const lines = [
-    `# ${data.siteTitle}`,
-    `> ${data.tagline}`,
+    'СТРУКТУРА БУДУЩЕГО llms.txt',
+    'Это только карта разделов и пояснение, что попадёт в каждый из них.',
+    'Готовый файл llms.txt собирает и размещает в корне сайта модуль LLMS.txt Generator.',
     '',
-    `> ${data.aiProfile}`,
+    '# Название сайта',
+    '  → короткое название вашего магазина.',
     '',
-    '## Документация и карты'
+    '> Краткое описание',
+    '  → одно предложение о том, чем занимается магазин.',
+    '',
+    '> AI-профиль',
+    '  → пояснение для AI: что продаёте, для кого и каким страницам доверять.',
+    '',
+    '## Карты сайта',
+    `  → ссылки на sitemap магазина. Найдено: ${formatSectionCount(data.sitemaps.length, ['карта', 'карты', 'карт'])}.`,
+    '',
+    '## Официальные источники данных',
+    `  → главная, каталог и ключевые разделы магазина. Найдено: ${formatSectionCount(data.officialSources.length, ['источник', 'источника', 'источников'])}.`,
+    '',
+    '## Приоритетные разделы',
+    `  → страницы, которым AI должен доверять в первую очередь. Найдено: ${formatSectionCount(data.priorityLinks.length, ['раздел', 'раздела', 'разделов'])}.`,
+    '',
+    '## Правила для LLM',
+    `  → как AI должен трактовать данные магазина. Подготовлено: ${formatSectionCount(data.rules.length, ['правило', 'правила', 'правил'])}.`,
+    '',
+    '## FAQ для LLM',
+    `  → частые вопросы о магазине и ответы для AI. Подготовлено: ${formatSectionCount(data.faq.length, ['вопрос', 'вопроса', 'вопросов'])}.`
   ];
 
-  data.sitemaps.forEach((item) => lines.push(`- [${item.label}](${item.url})`));
-  lines.push('', '## Официальные источники данных');
-  data.officialSources.forEach((item) => lines.push(`- [${item.label}](${item.url})`));
-  lines.push('', '## Приоритетные разделы');
-  data.priorityLinks.forEach((item) => lines.push(`- [${item.label}](${item.url})`));
-  lines.push('', '## Правила для LLM');
-  data.rules.forEach((item) => lines.push(`- ${item}`));
-  lines.push('', '## FAQ для LLM');
-  data.faq.forEach((item) => lines.push(`- ${item.question}: ${item.answer}`));
-
   data.customBlocks.forEach((block) => {
-    lines.push('', `## ${block.title}`);
-    block.entries.forEach((entry) => lines.push(`- [${entry.title}](${entry.url})`));
+    lines.push(
+      '',
+      `## ${block.title}`,
+      `  → дополнительный блок для AI. Записей: ${formatSectionCount(block.entries.length, ['запись', 'записи', 'записей'])}.`
+    );
   });
+
+  lines.push(
+    '',
+    '———',
+    `Готовое содержимое (${formatSectionCount(customCount, ['запись', 'записи', 'записей'])} в кастомных блоках, ссылки, тексты правил и FAQ)`,
+    'формируется внутри модуля. Здесь показана только структура, не сам файл.'
+  );
 
   return lines.join('\n');
 }
 
 function makeExportItems(data) {
   const blocks = [
-    { title: 'Название сайта', hint: 'Поле module_llms_generator_site_title', text: data.siteTitle },
-    { title: 'Краткое описание сайта', hint: 'Поле module_llms_generator_site_tagline', text: data.tagline },
-    { title: 'AI-профиль', hint: 'Поле module_llms_generator_ai_profile', text: data.aiProfile },
-    { title: 'Карты сайта', hint: 'Поле module_llms_generator_ai_sitemaps', text: formatLabeledLinks(data.sitemaps) },
-    { title: 'Официальные источники данных', hint: 'Поле module_llms_generator_ai_sources', text: formatLabeledLinks(data.officialSources) },
-    { title: 'Приоритетные разделы', hint: 'Поле module_llms_generator_ai_priority_links', text: formatLabeledLinks(data.priorityLinks) },
-    { title: 'Правила для LLM', hint: 'Поле module_llms_generator_ai_rules', text: formatRules(data.rules) },
-    { title: 'FAQ для LLM', hint: 'Пары вопрос / ответ для AI FAQ', text: formatFaq(data.faq) },
-    { title: 'Логика URL', hint: 'Поле module_llms_generator_ai_url_logic', text: formatRules(data.urlLogic) }
+    {
+      title: 'Название сайта',
+      hint: 'Поле module_llms_generator_site_title',
+      text: 'Что заполнить: короткое название вашего магазина.\n\nПример формата:\nИнтернет-магазин «Название»'
+    },
+    {
+      title: 'Краткое описание сайта',
+      hint: 'Поле module_llms_generator_site_tagline',
+      text: 'Что заполнить: одно предложение о том, чем занимается магазин.\n\nПример формата:\nИнтернет-магазин электроники: смартфоны, ноутбуки, аксессуары.'
+    },
+    {
+      title: 'AI-профиль',
+      hint: 'Поле module_llms_generator_ai_profile',
+      text: 'Что заполнить: пояснение для AI — что продаёте, для кого и каким страницам доверять.\n\nПример формата:\nИнтернет-магазин электроники. Для официальной информации используйте страницы товаров, категории, доставку, оплату и гарантию.'
+    },
+    {
+      title: 'Карты сайта',
+      hint: 'Поле module_llms_generator_ai_sitemaps',
+      text: `Что заполнить: ссылки на sitemap магазина (по одной в строке).\nНайдено при анализе: ${formatSectionCount(data.sitemaps.length, ['карта', 'карты', 'карт'])} — они попадут в JSON для импорта.\n\nПример формата:\nОсновная sitemap|https://site.ru/sitemap.xml`
+    },
+    {
+      title: 'Официальные источники данных',
+      hint: 'Поле module_llms_generator_ai_sources',
+      text: `Что заполнить: главная, каталог и ключевые разделы магазина.\nНайдено при анализе: ${formatSectionCount(data.officialSources.length, ['источник', 'источника', 'источников'])} — они попадут в JSON для импорта.\n\nПример формата:\nНазвание раздела|https://site.ru/razdel`
+    },
+    {
+      title: 'Приоритетные разделы',
+      hint: 'Поле module_llms_generator_ai_priority_links',
+      text: `Что заполнить: страницы, которым AI должен доверять в первую очередь.\nНайдено при анализе: ${formatSectionCount(data.priorityLinks.length, ['раздел', 'раздела', 'разделов'])} — они попадут в JSON для импорта.\n\nПример формата:\nДоставка|https://site.ru/delivery`
+    },
+    {
+      title: 'Правила для LLM',
+      hint: 'Поле module_llms_generator_ai_rules',
+      text: `Что заполнить: как AI должен трактовать данные магазина.\nПодготовлено при анализе: ${formatSectionCount(data.rules.length, ['правило', 'правила', 'правил'])} — они попадут в JSON для импорта.\n\nПример формата:\n- Для цен и наличия используйте только карточки товара.`
+    },
+    {
+      title: 'FAQ для LLM',
+      hint: 'Пары вопрос / ответ для AI FAQ',
+      text: `Что заполнить: частые вопросы о магазине и ответы для AI.\nПодготовлено при анализе: ${formatSectionCount(data.faq.length, ['вопрос', 'вопроса', 'вопросов'])} — они попадут в JSON для импорта.\n\nПример формата:\nГде посмотреть условия доставки?\nНа странице доставки: https://site.ru/delivery`
+    },
+    {
+      title: 'Логика URL',
+      hint: 'Поле module_llms_generator_ai_url_logic',
+      text: 'Что заполнить: пояснение, как устроены URL магазина.\n\nПример формата:\n- Каталог и товары находятся в отдельной SEO-структуре домена.'
+    }
   ];
 
   data.customBlocks.forEach((block) => {
     blocks.push({
       title: `Кастомный блок: ${block.title}`,
       hint: 'Режим: произвольный список (Markdown)',
-      text: formatCustomBlock(block)
+      text: `Что заполнить: дополнительный блок для AI.\nЗаписей найдено при анализе: ${formatSectionCount(block.entries.length, ['запись', 'записи', 'записей'])} — они попадут в JSON для импорта.\n\nПример формата:\nНазвание|https://site.ru/link|Короткое описание`
     });
   });
 
@@ -1122,7 +1198,7 @@ async function runAdvisor() {
     discoveryGrid.innerHTML = '<div class="placeholder">Анализ не выполнен. Проверьте URL и попробуйте ещё раз.</div>';
     recommendationsBox.innerHTML = '<div class="placeholder">Рекомендации пока не собраны.</div>';
     exportsList.innerHTML = '<div class="placeholder">Экспорт появится после успешного анализа.</div>';
-    llmsPreview.textContent = '# Preview появится после анализа';
+    llmsPreview.textContent = 'Структура появится после анализа';
     downloadJsonButton.disabled = true;
     previewJsonButton.disabled = true;
     jsonMetaNote.textContent = 'Этот файл пригодится для будущего импорта настроек прямо в админке модуля.';
