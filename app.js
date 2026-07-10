@@ -1141,10 +1141,12 @@ async function runAdvisor() {
       focus,
       primarySourceText
     };
-    if (typeof window.buildReviewState === 'function') {
+    if (typeof window.setReviewState === 'function') {
+      window.setReviewState(reviewBase);
+    } else if (typeof window.buildReviewState === 'function') {
       window.buildReviewState(reviewBase);
     }
-    latestDownloadPayload = buildJsonDownloadPayload({
+    const exportData = {
       siteUrl: siteUrl.href,
       siteTitle,
       tagline,
@@ -1157,7 +1159,8 @@ async function runAdvisor() {
       urlLogic,
       customBlocks,
       recommendations
-    });
+    };
+    latestDownloadPayload = buildJsonDownloadPayload(exportData);
     window.latestDownloadPayload = latestDownloadPayload;
     const jsonMeta = getJsonMeta(latestDownloadPayload);
 
