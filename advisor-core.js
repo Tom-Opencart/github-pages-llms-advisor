@@ -172,7 +172,7 @@
   }
 
   function parseFaqPipeLine(line) {
-    const text = normalizeFaqText(line);
+    const text = collapseWhitespace(stripHtml(line));
     const separator = text.indexOf('|');
 
     if (separator === -1) {
