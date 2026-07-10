@@ -15,6 +15,7 @@
   const recommendationsBox = document.getElementById('module-recommendations');
   const exportsList = document.getElementById('exports-list');
   const llmsPreview = document.getElementById('llms-preview');
+  const floatingDownload = document.getElementById('floating-download');
   const reviewStateStore = {
     current: null
   };
@@ -61,11 +62,6 @@
         margin-bottom: 12px;
       }
 
-      .review-card__lead {
-        margin: 4px 0 0;
-        color: var(--text-secondary);
-      }
-
       .review-summary {
         display: grid;
         gap: 12px;
@@ -89,33 +85,6 @@
 
       .review-summary__value {
         color: var(--text-secondary);
-      }
-
-      .review-section {
-        padding: 14px;
-        border: 1px solid var(--border-muted);
-        background: var(--surface-color);
-      }
-
-      .review-section__head {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        align-items: start;
-        flex-wrap: wrap;
-        margin-bottom: 12px;
-      }
-
-      .review-section__title {
-        margin: 0;
-        font-size: 15px;
-        line-height: 1.25;
-      }
-
-      .review-section__hint {
-        margin: 4px 0 0;
-        color: var(--text-secondary);
-        font-size: 13px;
       }
 
       .review-items {
@@ -650,7 +619,7 @@
     syncReviewStateFromDom();
     const exportData = collectExportData(reviewStateStore.current);
     const payload = buildJsonDownloadPayload(exportData);
-    window.latestDownloadPayload = payload;
+    latestDownloadPayload = payload;
 
     if (exportButton) {
       exportButton.disabled = false;
@@ -670,12 +639,6 @@
     reviewStateStore.current = buildReviewState(base);
     renderReviewPanel(reviewStateStore.current);
     refreshExportState();
-  }
-
-  function showReviewHint(text) {
-    if (reviewShell && !reviewShell.querySelector('[data-review-id]')) {
-      reviewShell.innerHTML = `<div class="review-empty">${escapeHtml(text)}</div>`;
-    }
   }
 
   if (reviewShell) {
@@ -709,10 +672,10 @@
     demoButton.disabled = true;
     exportButton.disabled = true;
     previewButton.disabled = true;
-    if (window.floatingDownload) {
-      window.floatingDownload.hidden = true;
+    if (floatingDownload) {
+      floatingDownload.hidden = true;
     }
-    window.latestDownloadPayload = null;
+    latestDownloadPayload = null;
     if (jsonPreviewCard) {
       jsonPreviewCard.hidden = true;
     }
@@ -825,8 +788,8 @@
       };
       setReviewState(reviewBase);
       const exportData = collectExportData(reviewStateStore.current);
-      window.latestDownloadPayload = buildJsonDownloadPayload(exportData);
-      const jsonMeta = getJsonMeta(window.latestDownloadPayload);
+      latestDownloadPayload = buildJsonDownloadPayload(exportData);
+      const jsonMeta = getJsonMeta(latestDownloadPayload);
 
       if (typeof renderDiscovery === 'function') {
         renderDiscovery({
@@ -873,8 +836,8 @@
       }
       exportButton.disabled = false;
       previewButton.disabled = false;
-      if (window.floatingDownload) {
-        window.floatingDownload.hidden = false;
+      if (floatingDownload) {
+        floatingDownload.hidden = false;
       }
       if (jsonMetaNote) {
         jsonMetaNote.textContent = `Файл готов к скачиванию: ${jsonMeta.fileName} • размер примерно ${formatBytes(jsonMeta.bytes)}. JSON уже собран из подтверждённого review.`;
