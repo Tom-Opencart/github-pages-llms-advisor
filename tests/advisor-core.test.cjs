@@ -6,7 +6,8 @@ const {
   sanitizeNarrativeText,
   guessTagline,
   buildMeaningfulTagline,
-  buildMeaningfulProfile
+  buildMeaningfulProfile,
+  normalizeFaqEntries
 } = require('../advisor-core.js');
 
 test('looksTechnicalText detects robots-style payloads', () => {
@@ -88,4 +89,14 @@ test('buildMeaningfulProfile uses fallback tagline and focus signals', () => {
   assert.match(result, /маркетплейс/);
   assert.match(result, /B2B/);
   assert.match(result, /каталог, карточки товаров и сервисные страницы/);
+});
+
+test('normalizeFaqEntries exports OpenCart-compatible question and answer pairs', () => {
+  assert.equal(
+    normalizeFaqEntries([
+      { question: 'Как оформить заказ?', answer: 'Через корзину на сайте.' },
+      { question: 'Есть ли доставка?', answer: 'Да, условия указаны на странице доставки.' }
+    ]),
+    'Как оформить заказ?|Через корзину на сайте.\nЕсть ли доставка?|Да, условия указаны на странице доставки.'
+  );
 });

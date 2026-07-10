@@ -823,9 +823,7 @@ function normalizeLineEntries(items) {
 }
 
 function normalizeFaqEntries(items) {
-  return items
-    .map((item) => `${item.question}\n${item.answer}`)
-    .join('\n\n');
+  return LlmsAdvisorCore.normalizeFaqEntries(items);
 }
 
 function buildJsonSettingsPayload(data) {

@@ -119,11 +119,24 @@
     return parts.join(' ').trim();
   }
 
+  function normalizeFaqEntries(items) {
+    return (Array.isArray(items) ? items : [])
+      .map((item) => {
+        const question = String(item && item.question ? item.question : '').trim().replace(/[\r\n|]+/g, ' ');
+        const answer = String(item && item.answer ? item.answer : '').trim().replace(/[\r\n|]+/g, ' ');
+
+        return question && answer ? `${question}|${answer}` : '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+
   return {
     looksTechnicalText,
     sanitizeNarrativeText,
     guessTagline,
     buildMeaningfulTagline,
-    buildMeaningfulProfile
+    buildMeaningfulProfile,
+    normalizeFaqEntries
   };
 });
