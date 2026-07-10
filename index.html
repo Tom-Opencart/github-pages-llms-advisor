@@ -124,8 +124,8 @@
         </article>
         <article class="summary-tile">
           <div class="summary-tile__kicker">Шаг 4</div>
-          <h2>Что копировать</h2>
-          <p>Готовые поля для вставки в модуль, свернутые в удобные компактные блоки.</p>
+          <h2>Проверка перед экспортом</h2>
+          <p>Подтвердите, отредактируйте или исключите найденные поля до скачивания JSON.</p>
         </article>
       </section>
 
@@ -150,10 +150,20 @@
           </div>
         </section>
 
+        <section class="card card--secondary" id="review-card">
+          <div class="card__head">
+            <h2>Шаг 4. Проверка перед экспортом</h2>
+            <p>Поля со статусом, источником и уверенностью показываются здесь до формирования JSON. FAQ можно править прямо в блоке.</p>
+          </div>
+          <div id="review-shell" class="review-shell">
+            <div class="placeholder">После анализа здесь появится компактный review-блок с подтверждением данных.</div>
+          </div>
+        </section>
+
         <section class="card" id="exports-card">
           <div class="card__head">
-            <h2>Шаг 4. Поля модуля: что и в каком формате заполнять</h2>
-            <p>Для каждого поля показано пояснение и пример формата. Готовые данные вашего сайта не выводятся здесь текстом — они попадают в JSON для импорта в модуль. Сам файл llms.txt формирует и размещает в корне сайта модуль LLMS.txt Generator.</p>
+            <h2>Шаг 5. Поля модуля: что и в каком формате заполнять</h2>
+            <p>Для каждого поля показано пояснение и пример формата. JSON строится из подтверждённого состояния review, а не из необработанных эвристик. Сам файл llms.txt формирует и размещает в корне сайта модуль LLMS.txt Generator.</p>
           </div>
           <div class="exports-toolbar">
             <div class="exports-toolbar__actions">
@@ -172,7 +182,7 @@
 
         <section class="card card--secondary" id="preview-card">
           <div class="card__head">
-            <h2>Шаг 5. Структура будущего llms.txt</h2>
+            <h2>Шаг 6. Структура будущего llms.txt</h2>
             <p>Здесь показана только карта разделов и пояснение, что попадёт в каждый из них. Готовый файл llms.txt собирает и размещает в корне сайта модуль LLMS.txt Generator.</p>
           </div>
           <pre id="llms-preview" class="preview-box">Структура появится после анализа</pre>
@@ -222,5 +232,6 @@
 
   <script src="./advisor-core.js"></script>
   <script src="./app.js"></script>
+  <script src="./app-review.js"></script>
 </body>
 </html>
