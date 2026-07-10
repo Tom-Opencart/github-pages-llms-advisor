@@ -60,21 +60,23 @@ const MODULE_PURCHASE_URL = 'https://liveopencart.ru/opencart-moduli-shablony/mo
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  await runAdvisor();
+  await (window.runAdvisor || runAdvisor)();
 });
 
 demoButton.addEventListener('click', async () => {
   siteUrlInput.value = DEMO_SITE;
   manualHintsInput.value = DEMO_HINTS;
-  await runAdvisor();
+  await (window.runAdvisor || runAdvisor)();
 });
 
 downloadJsonButton.addEventListener('click', () => {
-  if (!latestDownloadPayload) {
+  const payload = window.latestDownloadPayload || latestDownloadPayload;
+
+  if (!payload) {
     return;
   }
 
-  const meta = getJsonMeta(latestDownloadPayload);
+  const meta = getJsonMeta(payload);
   const fileName = meta.fileName;
   const blob = new Blob([meta.jsonString], { type: 'application/json;charset=utf-8' });
   const objectUrl = URL.createObjectURL(blob);
@@ -93,11 +95,13 @@ downloadJsonButton.addEventListener('click', () => {
 });
 
 previewJsonButton.addEventListener('click', () => {
-  if (!latestDownloadPayload) {
+  const payload = window.latestDownloadPayload || latestDownloadPayload;
+
+  if (!payload) {
     return;
   }
 
-  const meta = getJsonMeta(latestDownloadPayload);
+  const meta = getJsonMeta(payload);
   jsonPreview.textContent = meta.jsonString;
   jsonPreviewCard.hidden = false;
   jsonPreviewCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1036,6 +1040,7 @@ async function runAdvisor() {
   previewJsonButton.disabled = true;
   floatingDownload.hidden = true;
   latestDownloadPayload = null;
+  window.latestDownloadPayload = null;
   jsonPreviewCard.hidden = true;
   jsonMetaNote.textContent = 'Этот файл пригодится для будущего импорта настроек прямо в админке модуля.';
   showSkeletons();
@@ -1120,6 +1125,25 @@ async function runAdvisor() {
       urlLogic,
       customBlocks
     });
+    const reviewBase = {
+      siteUrl: siteUrl.href,
+      siteTitle,
+      tagline,
+      aiProfile,
+      urlLogic,
+      recommendations,
+      sitemaps,
+      officialSources,
+      priorityLinks,
+      rules,
+      faq,
+      customBlocks,
+      focus,
+      primarySourceText
+    };
+    if (typeof window.buildReviewState === 'function') {
+      window.buildReviewState(reviewBase);
+    }
     latestDownloadPayload = buildJsonDownloadPayload({
       siteUrl: siteUrl.href,
       siteTitle,
@@ -1134,14 +1158,13 @@ async function runAdvisor() {
       customBlocks,
       recommendations
     });
+    window.latestDownloadPayload = latestDownloadPayload;
     const jsonMeta = getJsonMeta(latestDownloadPayload);
 
-    const readMode = remote.readableSources.length > 0
-      ? `Удалось прочитать ${remote.readableSources.length} источник(а). Основной режим: ${remote.homeResult.source === 'none' ? 'fallback only' : remote.homeResult.source}.`
-      : 'Автоматическое чтение сайта не сработало полноценно. Рекомендации собраны из URL, стандартных шаблонов и ваших подсказок.';
-
     renderDiscovery({
-      readMode,
+      readMode: remote.readableSources.length > 0
+        ? `Удалось прочитать ${remote.readableSources.length} источник(а). Основной режим: ${remote.homeResult.source === 'none' ? 'fallback only' : remote.homeResult.source}.`
+        : 'Автоматическое чтение сайта не сработало полноценно. Рекомендации собраны из URL, стандартных шаблонов и ваших подсказок.',
       sitemaps,
       servicePages,
       blogPages,
@@ -1186,7 +1209,7 @@ async function runAdvisor() {
     } else if (remote.homeResult.source === 'allorigins' || remote.homeResult.source === 'jina-ai') {
       setStatus('warning', 'Анализ выполнен через fallback-режим. Результат полезный, но найденные ссылки и формулировки лучше ещё раз перепроверить.');
     } else {
-      setStatus('success', 'Анализ завершён. Сначала прочитайте рекомендации, затем откройте нужные поля и копируйте только то, что подходит вашему магазину.');
+      setStatus('success', 'Анализ завершён. Сначала прочитайте рекомендации, затем проверьте review и копируйте только то, что подходит вашему магазину.');
     }
     setTimeout(() => scrollToResults(), 200);
   } catch (error) {
@@ -1208,3 +1231,5 @@ async function runAdvisor() {
     demoButton.disabled = false;
   }
 }
+
+window.runAdvisor = window.runAdvisor || runAdvisor;
