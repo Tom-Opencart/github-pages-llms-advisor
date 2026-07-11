@@ -89,6 +89,14 @@
               </span>
             </label>
 
+            <details class="field">
+              <summary class="field__label">Ручные источники, если сайт блокирует чтение</summary>
+              <span class="field__help">Данные остаются в браузере и не отправляются через сторонние proxy.</span>
+              <textarea id="manual-home-html" rows="5" placeholder="HTML главной страницы"></textarea>
+              <textarea id="manual-robots-txt" rows="3" placeholder="Содержимое robots.txt"></textarea>
+              <textarea id="manual-sitemap-xml" rows="5" placeholder="Содержимое sitemap.xml"></textarea>
+            </details>
+
             <div class="actions">
               <button type="submit" class="btn btn--primary" id="analyze-button">Анализировать сайт</button>
               <button type="button" class="btn btn--ghost" id="demo-button">Загрузить демо</button>
@@ -104,7 +112,7 @@
           </div>
 
           <div class="intake-card__footnote">
-            Сначала инструмент пробует читать сайт напрямую через браузер. Если сайт блокирует CORS, включается fallback через публичный текстовый прокси.
+            Инструмент читает только URL сайта, robots.txt и sitemap.xml напрямую из браузера. Если CORS блокирует чтение, вставьте источники вручную выше.
           </div>
         </section>
       </div>
@@ -233,6 +241,5 @@
   <script src="./advisor-core.js"></script>
   <script src="./app.js"></script>
   <script src="./app-review.js"></script>
-  <script src="./app-crawl.js"></script>
 </body>
 </html>

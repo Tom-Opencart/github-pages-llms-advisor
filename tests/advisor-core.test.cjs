@@ -5,6 +5,7 @@ const {
   getModuleSettingKeys,
   filterModuleSettings,
   buildJsonExportPayload,
+  normalizeManualSourceText,
   looksTechnicalText,
   sanitizeNarrativeText,
   guessTagline,
@@ -17,6 +18,13 @@ const {
   extractFaqRecordsFromFallback,
   extractFaqRecords
 } = require('../advisor-core.js');
+
+test('normalizeManualSourceText keeps meaningful source lines and removes empty lines', () => {
+  assert.equal(
+    normalizeManualSourceText('  <h1>Store</h1>\r\n\r\n  <p>Delivery</p>  \n'),
+    '<h1>Store</h1>\n<p>Delivery</p>'
+  );
+});
 
 test('looksTechnicalText detects robots-style payloads', () => {
   assert.equal(

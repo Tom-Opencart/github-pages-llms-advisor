@@ -1,6 +1,9 @@
 const form = document.getElementById('advisor-form');
 const siteUrlInput = document.getElementById('site-url');
 const manualHintsInput = document.getElementById('manual-hints');
+const manualHomeHtmlInput = document.getElementById('manual-home-html');
+const manualRobotsTxtInput = document.getElementById('manual-robots-txt');
+const manualSitemapXmlInput = document.getElementById('manual-sitemap-xml');
 const analyzeButton = document.getElementById('analyze-button');
 const demoButton = document.getElementById('demo-button');
 const statusBox = document.getElementById('status-box');
@@ -32,6 +35,7 @@ const guessTagline = advisorCore.guessTagline || ((metaDescription, cleanedBody,
 const sanitizeNarrativeText = advisorCore.sanitizeNarrativeText || ((text) => String(text || '').trim());
 const buildMeaningfulTagline = advisorCore.buildMeaningfulTagline || ((context) => context.tagline || `${context.title} — сайт с каталогом и страницами для клиентов.`);
 const buildMeaningfulProfile = advisorCore.buildMeaningfulProfile || ((context) => context.tagline || `${context.title} — сайт с каталогом и страницами для клиентов.`);
+const normalizeManualSourceText = advisorCore.normalizeManualSourceText || ((text) => String(text || '').replace(/\r/g, '').trim());
 
 const SERVICE_HINTS = [
   { key: 'about', label: 'О компании', patterns: ['/about', '/o-kompanii', '/about-us', '/company', '/about/'] },
@@ -205,39 +209,22 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-async function fetchTextWithFallback(targetUrl) {
-  const encoded = encodeURIComponent(targetUrl);
-  const candidates = [
-    { label: 'direct', url: targetUrl },
-    { label: 'allorigins', url: `https://api.allorigins.win/raw?url=${encoded}` },
-    { label: 'jina-ai', url: `https://r.jina.ai/http://${targetUrl.replace(/^https?:\/\//i, '')}` }
-  ];
-
+async function fetchTextDirect(targetUrl) {
   const errors = [];
+  try {
+    const response = await fetch(targetUrl, { method: 'GET' });
 
-  for (const candidate of candidates) {
-    try {
-      const response = await fetch(candidate.url, { method: 'GET' });
-
-      if (!response.ok) {
-        errors.push(`${candidate.label}: HTTP ${response.status}`);
-        continue;
-      }
-
+    if (response.ok) {
       const text = await response.text();
 
       if (text && text.trim().length > 0) {
-        return {
-          ok: true,
-          source: candidate.label,
-          targetUrl,
-          url: candidate.url,
-          text
-        };
+        return { ok: true, source: 'direct', targetUrl, url: targetUrl, text };
       }
-    } catch (error) {
-      errors.push(`${candidate.label}: ${error.message}`);
+    } else {
+      errors.push(`direct: HTTP ${response.status}`);
     }
+  } catch (error) {
+    errors.push(`direct: ${error.message}`);
   }
 
   return {
@@ -247,6 +234,43 @@ async function fetchTextWithFallback(targetUrl) {
     url: targetUrl,
     text: '',
     errors
+  };
+}
+
+function isSameOriginUrl(value, origin) {
+  try {
+    return new URL(value).origin === origin;
+  } catch (error) {
+    return false;
+  }
+}
+
+function createManualResult(targetUrl, text, source) {
+  const normalized = normalizeManualSourceText(text);
+
+  return normalized ? { ok: true, source, targetUrl, url: targetUrl, text: normalized } : null;
+}
+
+async function collectRemoteData(siteUrl, manualSources) {
+  const candidates = [siteUrl.href, ...buildCandidateSitemaps(siteUrl)];
+  const directResults = await Promise.all(candidates.map((url) => fetchTextDirect(url)));
+  const manualResults = [
+    createManualResult(siteUrl.href, manualSources.home, 'manual-home'),
+    createManualResult(new URL('/robots.txt', siteUrl).href, manualSources.robots, 'manual-robots'),
+    createManualResult(new URL('/sitemap.xml', siteUrl).href, manualSources.sitemap, 'manual-sitemap')
+  ].filter(Boolean);
+  const readableSources = [...manualResults, ...directResults.filter((item) => item.ok)];
+  const primarySource = manualResults.find((item) => item.source === 'manual-home') || directResults[0] || readableSources[0];
+  const combinedLinks = uniq(readableSources.flatMap((item) => extractUrls(item.text, item.targetUrl)))
+    .filter((url) => isSameOriginUrl(url, siteUrl.origin) && !isAssetUrl(url));
+
+  return {
+    homeResult: primarySource || { ok: false, source: 'none', text: '' },
+    primarySource: primarySource || null,
+    combined: readableSources.map((item) => item.text).join('\n'),
+    combinedLinks,
+    readableSources,
+    fetchErrors: directResults.flatMap((item) => item.errors || [])
   };
 }
 
@@ -314,7 +338,7 @@ function isIgnorableUrl(url, origin) {
 }
 
 function getPreferredReadableSources(readableSources) {
-  const htmlish = readableSources.filter((item) => item.source !== 'jina-ai');
+  const htmlish = readableSources.filter((item) => item.source !== 'manual-robots' && item.source !== 'manual-sitemap');
   return htmlish.length ? htmlish : readableSources;
 }
 
@@ -376,29 +400,6 @@ function buildCandidateSitemaps(siteUrl) {
     `${origin}/news-sitemap.xml`,
     `${origin}/blog-sitemap.xml`
   ]);
-}
-
-async function collectRemoteData(siteUrl) {
-  const candidates = buildCandidateSitemaps(siteUrl);
-  const [homeResult, ...auxiliary] = await Promise.all([
-    fetchTextWithFallback(siteUrl.href),
-    ...candidates.map((item) => fetchTextWithFallback(item))
-  ]);
-
-  const textSources = [homeResult, ...auxiliary].filter((item) => item.ok);
-  const preferredSources = getPreferredReadableSources(textSources);
-  const linkSources = preferredSources.length ? preferredSources : textSources;
-
-  return {
-    homeResult,
-    primarySource: preferredSources[0] || homeResult,
-    combined: preferredSources.map((item) => item.text).join('\n'),
-    combinedLinks: uniq(linkSources.flatMap((item) => extractUrls(item.text, siteUrl.href)).filter((link) => !isAssetUrl(link))),
-    readableSources: textSources,
-    fetchErrors: [homeResult, ...auxiliary]
-      .filter((item) => !item.ok && item.errors)
-      .flatMap((item) => item.errors)
-  };
 }
 
 function findServicePages(links, origin) {
@@ -1044,13 +1045,17 @@ async function runAdvisor() {
   jsonPreviewCard.hidden = true;
   jsonMetaNote.textContent = 'Этот файл пригодится для будущего импорта настроек прямо в админке модуля.';
   showSkeletons();
-  showOverlay('Читаю главную страницу, sitemap и служебные разделы...');
-  setStatus('working', 'Пробую прочитать сайт, sitemap и служебные страницы...');
+  showOverlay('Читаю главную страницу, robots.txt и sitemap.xml...');
+  setStatus('working', 'Пробую прочитать сайт напрямую. При CORS используйте ручные источники...');
 
   try {
     const siteUrl = normalizeUrl(siteUrlInput.value);
     const hints = sanitizeMultiline(manualHintsInput.value);
-    const remote = await collectRemoteData(siteUrl);
+    const remote = await collectRemoteData(siteUrl, {
+      home: manualHomeHtmlInput.value,
+      robots: manualRobotsTxtInput.value,
+      sitemap: manualSitemapXmlInput.value
+    });
     const primarySourceText = remote.primarySource?.text || remote.homeResult.text || '';
     const cleanedBody = sanitizeNarrativeText(cleanText(primarySourceText));
     const servicePages = findServicePages(remote.combinedLinks, siteUrl.origin);
@@ -1175,8 +1180,8 @@ async function runAdvisor() {
         focus.ecommerce ? 'Похож на интернет-магазин' : '',
         focus.marketplace ? 'Есть сигналы маркетплейсов' : '',
         focus.b2b ? 'Есть B2B / оптовый контекст' : '',
-        remote.homeResult.source === 'allorigins' || remote.homeResult.source === 'jina-ai'
-          ? 'Сработал fallback через публичный прокси'
+        remote.homeResult.source.indexOf('manual-') === 0
+          ? 'Использованы ручные источники'
           : 'Прямое чтение доступно'
       ].filter(Boolean),
       errors: remote.fetchErrors
@@ -1209,8 +1214,6 @@ async function runAdvisor() {
 
     if (remote.readableSources.length === 0) {
       setStatus('warning', 'Сайт прочитался не полностью. Инструмент всё равно собрал стартовые рекомендации, но их важно проверить вручную.');
-    } else if (remote.homeResult.source === 'allorigins' || remote.homeResult.source === 'jina-ai') {
-      setStatus('warning', 'Анализ выполнен через fallback-режим. Результат полезный, но найденные ссылки и формулировки лучше ещё раз перепроверить.');
     } else {
       setStatus('success', 'Анализ завершён. Сначала прочитайте рекомендации, затем проверьте review и копируйте только то, что подходит вашему магазину.');
     }

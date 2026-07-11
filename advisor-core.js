@@ -91,6 +91,15 @@
       .trim();
   }
 
+  function normalizeManualSourceText(text) {
+    return String(text || '')
+      .replace(/\r/g, '')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .join('\n');
+  }
+
   function decodeHtmlEntities(text) {
     return String(text || '')
       .replace(/&nbsp;/gi, ' ')
@@ -760,6 +769,7 @@
     getModuleSettingKeys,
     filterModuleSettings,
     buildJsonExportPayload,
+    normalizeManualSourceText,
     looksTechnicalText,
     sanitizeNarrativeText,
     guessTagline,
