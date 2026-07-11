@@ -453,15 +453,40 @@ select:focus {
 }
 
 .exports-toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px 24px;
   align-items: center;
-  gap: 14px;
   margin-top: 18px;
   padding: 14px 16px;
   border: 1px solid var(--border-color);
   background: var(--surface-muted);
   box-shadow: var(--shadow-soft);
+}
+
+.exports-toolbar__content {
+  display: grid;
+  gap: 12px;
+}
+
+.exports-toolbar__actions {
+  align-items: center;
+}
+
+.exports-toolbar__primary .btn {
+  min-width: 228px;
+}
+
+.exports-toolbar__module-link {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.exports-toolbar__module-link:hover {
+  color: var(--accent-dark);
 }
 
 .exports-toolbar__note {
@@ -823,13 +848,20 @@ select:focus {
   .export-item__summary,
   .actions,
   .exports-toolbar {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     align-items: stretch;
   }
 
   .exports-toolbar__actions {
     width: 100%;
     flex-direction: column;
+  }
+
+  .exports-toolbar__primary,
+  .exports-toolbar__secondary,
+  .exports-toolbar__primary .btn,
+  .exports-toolbar__secondary .btn {
+    width: 100%;
   }
 
   .export-item__tools {

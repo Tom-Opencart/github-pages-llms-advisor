@@ -174,14 +174,20 @@
             <p>Для каждого поля показано пояснение и пример формата. JSON строится из подтверждённого состояния review, а не из необработанных эвристик. Сам файл llms.txt формирует и размещает в корне сайта модуль LLMS.txt Generator.</p>
           </div>
           <div class="exports-toolbar">
-            <div class="exports-toolbar__actions">
-              <button type="button" class="btn btn--primary" id="download-json-button" disabled>Скачать JSON для модуля</button>
-              <button type="button" class="btn btn--ghost" id="preview-json-button" disabled>Показать JSON</button>
-              <a class="btn btn--ghost" href="https://liveopencart.ru/opencart-moduli-shablony/moduli/marketing-konversiya/llms-txt-generator" target="_blank" rel="noopener noreferrer">Купить модуль</a>
+            <div class="exports-toolbar__content">
+              <div class="exports-toolbar__note" id="json-meta-note">
+                Этот файл импортируется прямо в админке модуля — он заполнит поля вашими данными автоматически.
+              </div>
+              <div class="exports-toolbar__actions">
+                <div class="exports-toolbar__primary">
+                  <button type="button" class="btn btn--primary" id="download-json-button" disabled>Скачать JSON для модуля</button>
+                </div>
+                <div class="exports-toolbar__secondary">
+                  <button type="button" class="btn btn--ghost" id="preview-json-button" disabled>Показать JSON</button>
+                </div>
+              </div>
             </div>
-            <div class="exports-toolbar__note" id="json-meta-note">
-              Этот файл импортируется прямо в админке модуля — он заполнит поля вашими данными автоматически.
-            </div>
+            <a class="exports-toolbar__module-link" href="https://liveopencart.ru/opencart-moduli-shablony/moduli/marketing-konversiya/llms-txt-generator" target="_blank" rel="noopener noreferrer">Нет модуля? Открыть страницу LLMS.txt Generator →</a>
           </div>
           <div id="exports-list" class="exports-list">
             <div class="placeholder">После анализа здесь появятся пояснения и примеры формата для каждого поля модуля.</div>

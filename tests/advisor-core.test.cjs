@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const {
   getModuleSettingKeys,
@@ -352,4 +354,12 @@ test('normalizeFaqRecords removes duplicates and technical noise', () => {
       }
     ]
   );
+});
+
+test('export toolbar separates download, preview, and external module link', () => {
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  assert.match(html, /class="exports-toolbar__primary"[\s\S]*id="download-json-button"/);
+  assert.match(html, /class="exports-toolbar__secondary"[\s\S]*id="preview-json-button"/);
+  assert.match(html, /class="exports-toolbar__module-link"[^>]*href="https:\/\/liveopencart\.ru\//);
 });
