@@ -237,6 +237,70 @@ async function fetchTextDirect(targetUrl) {
   };
 }
 
+function buildProxyTargetUrl(targetUrl) {
+  return `https://r.jina.ai/http://${String(targetUrl || '').replace(/^https?:\/\//i, '')}`;
+}
+
+async function fetchTextProxy(targetUrl) {
+  const errors = [];
+  const proxyUrl = buildProxyTargetUrl(targetUrl);
+
+  try {
+    const response = await fetch(proxyUrl, { method: 'GET' });
+
+    if (response.ok) {
+      const text = await response.text();
+
+      if (text && text.trim().length > 0) {
+        return {
+          ok: true,
+          source: 'proxy',
+          targetUrl,
+          url: proxyUrl,
+          text
+        };
+      }
+    } else {
+      errors.push(`proxy: HTTP ${response.status}`);
+    }
+  } catch (error) {
+    errors.push(`proxy: ${error.message}`);
+  }
+
+  return {
+    ok: false,
+    source: 'none',
+    targetUrl,
+    url: proxyUrl,
+    text: '',
+    errors
+  };
+}
+
+async function fetchText(targetUrl) {
+  const directResult = await fetchTextDirect(targetUrl);
+
+  if (directResult.ok) {
+    return directResult;
+  }
+
+  const proxyResult = await fetchTextProxy(targetUrl);
+
+  if (proxyResult.ok) {
+    proxyResult.errors = (directResult.errors || []).concat(proxyResult.errors || []);
+    return proxyResult;
+  }
+
+  return {
+    ok: false,
+    source: 'none',
+    targetUrl,
+    url: targetUrl,
+    text: '',
+    errors: (directResult.errors || []).concat(proxyResult.errors || [])
+  };
+}
+
 function isSameOriginUrl(value, origin) {
   try {
     return new URL(value).origin === origin;
@@ -253,14 +317,28 @@ function createManualResult(targetUrl, text, source) {
 
 async function collectRemoteData(siteUrl, manualSources) {
   const candidates = [siteUrl.href, ...buildCandidateSitemaps(siteUrl)];
-  const directResults = await Promise.all(candidates.map((url) => fetchTextDirect(url)));
+  const fetchedResults = await Promise.all(candidates.map((url) => fetchText(url)));
   const manualResults = [
     createManualResult(siteUrl.href, manualSources.home, 'manual-home'),
     createManualResult(new URL('/robots.txt', siteUrl).href, manualSources.robots, 'manual-robots'),
     createManualResult(new URL('/sitemap.xml', siteUrl).href, manualSources.sitemap, 'manual-sitemap')
   ].filter(Boolean);
-  const readableSources = [...manualResults, ...directResults.filter((item) => item.ok)];
-  const primarySource = manualResults.find((item) => item.source === 'manual-home') || directResults[0] || readableSources[0];
+  const initialReadableSources = [...manualResults, ...fetchedResults.filter((item) => item.ok)];
+  const initialCombinedLinks = uniq(initialReadableSources.flatMap((item) => extractUrls(item.text, item.targetUrl)))
+    .filter((url) => isSameOriginUrl(url, siteUrl.origin) && !isAssetUrl(url));
+  const deepScanTargets = buildDeepScanTargets(initialCombinedLinks, siteUrl.origin);
+  const knownTargets = new Set(initialReadableSources.map((item) => item.targetUrl));
+  const deepScanAttempts = await Promise.all(
+    deepScanTargets
+      .filter((url) => !knownTargets.has(url))
+      .map((url) => fetchText(url))
+  );
+  const deepScanResults = deepScanAttempts.filter((item) => item.ok);
+  const readableSources = [...initialReadableSources, ...deepScanResults];
+  const primarySource = manualResults.find((item) => item.source === 'manual-home')
+    || readableSources.find((item) => item.targetUrl === siteUrl.href)
+    || fetchedResults[0]
+    || readableSources[0];
   const combinedLinks = uniq(readableSources.flatMap((item) => extractUrls(item.text, item.targetUrl)))
     .filter((url) => isSameOriginUrl(url, siteUrl.origin) && !isAssetUrl(url));
 
@@ -270,7 +348,7 @@ async function collectRemoteData(siteUrl, manualSources) {
     combined: readableSources.map((item) => item.text).join('\n'),
     combinedLinks,
     readableSources,
-    fetchErrors: directResults.flatMap((item) => item.errors || [])
+    fetchErrors: fetchedResults.concat(deepScanAttempts).flatMap((item) => item.errors || [])
   };
 }
 
@@ -400,6 +478,46 @@ function buildCandidateSitemaps(siteUrl) {
     `${origin}/news-sitemap.xml`,
     `${origin}/blog-sitemap.xml`
   ]);
+}
+
+function buildDeepScanTargets(links, origin) {
+  const priorityPatterns = [
+    /about_us/i,
+    /o-kompanii/i,
+    /about/i,
+    /company/i,
+    /contact/i,
+    /kontakty/i,
+    /delivery/i,
+    /dostavka/i,
+    /payment/i,
+    /oplata/i,
+    /usloviya/i,
+    /soglasheni/i,
+    /vozvrat/i,
+    /skidk/i,
+    /faq/i,
+    /reviews/i,
+    /otzyv/i,
+    /news/i,
+    /novosti/i,
+    /blog/i,
+    /stati/i,
+    /articles/i,
+    /wallpaper/i,
+    /sovet/i,
+    /foto/i
+  ];
+
+  return links
+    .filter((link) => {
+      if (isIgnorableUrl(link, origin)) {
+        return false;
+      }
+
+      return priorityPatterns.some((pattern) => pattern.test(link));
+    })
+    .slice(0, 10);
 }
 
 function findServicePages(links, origin) {
