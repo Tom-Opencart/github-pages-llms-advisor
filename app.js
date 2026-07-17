@@ -1135,6 +1135,8 @@ async function runAdvisor() {
       siteTitle,
       tagline,
       aiProfile,
+      servicePages,
+      blogPages,
       urlLogic,
       recommendations,
       sitemaps,

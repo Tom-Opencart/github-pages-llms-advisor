@@ -262,7 +262,9 @@
   }
 
   function mapLinkItems(items, prefix) {
-    return items.map((item, index) => ({
+    const sourceItems = Array.isArray(items) ? items : [];
+
+    return sourceItems.map((item, index) => ({
       id: makeItemId(prefix, index),
       kind: 'link',
       title: item.label,
@@ -275,7 +277,9 @@
   }
 
   function mapRuleItems(items) {
-    return items.map((text, index) => ({
+    const sourceItems = Array.isArray(items) ? items : [];
+
+    return sourceItems.map((text, index) => ({
       id: makeItemId('rule', index),
       kind: 'rule',
       title: `Правило ${index + 1}`,
@@ -288,7 +292,9 @@
   }
 
   function mapFaqItems(records) {
-    return records.map((item, index) => ({
+    const sourceRecords = Array.isArray(records) ? records : [];
+
+    return sourceRecords.map((item, index) => ({
       id: makeItemId('faq', index),
       kind: 'faq',
       title: item.question,
@@ -302,7 +308,9 @@
   }
 
   function mapCustomBlockItems(items) {
-    return items.map((block, index) => ({
+    const sourceItems = Array.isArray(items) ? items : [];
+
+    return sourceItems.map((block, index) => ({
       id: makeItemId('custom', index),
       kind: 'custom',
       title: block.title,
@@ -315,10 +323,12 @@
   }
 
   function buildReviewState(base) {
+    const servicePages = Array.isArray(base.servicePages) ? base.servicePages : [];
+    const blogPages = Array.isArray(base.blogPages) ? base.blogPages : [];
     const extractedFaq = core.extractFaqRecords
       ? core.extractFaqRecords(base.primarySourceText, base.siteUrl)
       : [];
-    const generatedFaq = buildFaq(base.siteTitle, base.focus, base.servicePages, base.blogPages).map((item) => ({
+    const generatedFaq = buildFaq(base.siteTitle, base.focus, servicePages, blogPages).map((item) => ({
       question: item.question,
       answer: item.answer,
       sourceType: 'inference',
