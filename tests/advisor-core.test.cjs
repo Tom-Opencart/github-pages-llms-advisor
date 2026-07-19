@@ -117,6 +117,14 @@ test('getModuleSettingKeys returns the expected allowlist for the module contrac
   assert.equal(new Set(keys).size, keys.length);
 });
 
+test('JSON export declares every setting supported by the current generator', () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+
+  getModuleSettingKeys().forEach((key) => {
+    assert.match(appSource, new RegExp(`${key}:`), `Export is missing ${key}`);
+  });
+});
+
 test('filterModuleSettings keeps only module keys and normalizes ids and faq', () => {
   const filtered = filterModuleSettings(
     {
