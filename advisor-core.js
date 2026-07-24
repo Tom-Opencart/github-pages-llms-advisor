@@ -683,7 +683,8 @@
       generated_at: generatedAt,
       source: {
         tool: source.tool || 'llms-setup-advisor',
-        site_url: source.site_url || source.siteUrl || ''
+        site_url: source.site_url || source.siteUrl || '',
+        store_scope: source.store_scope || 'single-store'
       },
       summary,
       settings: filterModuleSettings(settingsSource, {
