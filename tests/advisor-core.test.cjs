@@ -169,7 +169,8 @@ test('buildJsonExportPayload emits llms-generator-config v1 and only allowed mod
   assert.equal(payload.generated_at, '2024-01-02T03:04:05.000Z');
   assert.deepEqual(payload.source, {
     tool: 'unit-test',
-    site_url: 'https://example.com'
+    site_url: 'https://example.com',
+    store_scope: 'single-store'
   });
   assert.deepEqual(payload.summary, {
     site_title: 'Tom Shop',

@@ -1008,7 +1008,8 @@ function buildJsonDownloadPayload(data) {
     generated_at: new Date().toISOString(),
     source: {
       tool: 'llms-setup-advisor',
-      site_url: data.siteUrl
+      site_url: data.siteUrl,
+      store_scope: 'single-store'
     },
     summary: {
       site_title: data.siteTitle,
@@ -1161,7 +1162,7 @@ async function runAdvisor() {
   latestDownloadPayload = null;
   window.latestDownloadPayload = null;
   jsonPreviewCard.hidden = true;
-  jsonMetaNote.textContent = 'Этот файл пригодится для будущего импорта настроек прямо в админке модуля.';
+  jsonMetaNote.textContent = 'Этот файл импортируется в настройки одного выбранного магазина в админке модуля.';
   showSkeletons();
   showOverlay('Читаю главную страницу, robots.txt и sitemap.xml...');
   setStatus('working', 'Пробую прочитать сайт напрямую. При CORS используйте ручные источники...');
@@ -1319,7 +1320,7 @@ async function runAdvisor() {
     downloadJsonButton.disabled = false;
     previewJsonButton.disabled = false;
     showFloatingDownload();
-    jsonMetaNote.textContent = `Файл готов к скачиванию: ${jsonMeta.fileName} • размер примерно ${formatBytes(jsonMeta.bytes)}. Можно сначала открыть JSON и проверить его вручную.`;
+    jsonMetaNote.textContent = `Файл готов к скачиванию: ${jsonMeta.fileName} • размер примерно ${formatBytes(jsonMeta.bytes)}. В админке сначала выберите этот магазин, затем импортируйте JSON.`;
     llmsPreview.textContent = formatPreview({
       siteTitle,
       tagline,
@@ -1348,7 +1349,7 @@ async function runAdvisor() {
     llmsPreview.textContent = 'Структура появится после анализа';
     downloadJsonButton.disabled = true;
     previewJsonButton.disabled = true;
-    jsonMetaNote.textContent = 'Этот файл пригодится для будущего импорта настроек прямо в админке модуля.';
+    jsonMetaNote.textContent = 'Этот файл импортируется в настройки одного выбранного магазина в админке модуля.';
     jsonPreviewCard.hidden = true;
     setStatus('error', error.message || 'Не удалось обработать сайт.');
   } finally {
